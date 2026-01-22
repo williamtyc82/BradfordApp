@@ -8,6 +8,7 @@ import {
   ClipboardList,
   AlertTriangle,
   Megaphone,
+  Users,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -16,11 +17,31 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { UserNav } from './user-nav';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
+import { useAuth } from '@/hooks/use-auth';
+import { cn } from '@/lib/utils';
+import { Badge } from '../ui/badge';
+import { usePathname } from 'next/navigation';
 
 export function Header() {
   const logo = PlaceHolderImages.find((img) => img.id === 'logo');
+  const pathname = usePathname();
+  const { user } = useAuth();
+
+  const navItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/dashboard/training', label: 'Training', icon: BookOpen },
+    { href: '/dashboard/quizzes', label: 'Quizzes', icon: ClipboardList, badge: 3 },
+    { href: '/dashboard/incidents', label: 'Incidents', icon: AlertTriangle, badge: 2 },
+    { href: '/dashboard/announcements', label: 'Announcements', icon: Megaphone },
+  ];
+
+  if (user?.role === 'manager') {
+    navItems.push({ href: '#', label: 'Team Progress', icon: Users });
+  }
+
+
   return (
-    <header className="flex items-center gap-4 border-b bg-card px-4 lg:px-6 py-7">
+    <header className="flex h-[80px] items-center gap-4 border-b bg-card px-4 lg:px-6">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -29,7 +50,7 @@ export function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="flex flex-col p-0">
-          <div className="flex items-center border-b px-4 lg:px-6 py-7">
+          <div className="flex h-[80px] items-center border-b px-4 lg:px-6">
             <Link
               href="/dashboard"
               className="flex items-center gap-2 text-lg font-semibold"
@@ -53,41 +74,24 @@ export function Header() {
           </div>
           <div className="flex-1 overflow-y-auto">
             <nav className="grid items-start p-4 text-base font-medium">
+            {navItems.map((item) => (
               <Link
-                href="/dashboard"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                key={item.label}
+                href={item.href}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+                  pathname === item.href && 'bg-muted text-primary'
+                )}
               >
-                <Home className="h-4 w-4" />
-                Dashboard
+                <item.icon className="h-4 w-4" />
+                {item.label}
+                {item.badge && (
+                  <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
+                    {item.badge}
+                  </Badge>
+                )}
               </Link>
-              <Link
-                href="/dashboard/training"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-              >
-                <BookOpen className="h-4 w-4" />
-                Training
-              </Link>
-              <Link
-                href="/dashboard/quizzes"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-              >
-                <ClipboardList className="h-4 w-4" />
-                Quizzes
-              </Link>
-              <Link
-                href="/dashboard/incidents"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-              >
-                <AlertTriangle className="h-4 w-4" />
-                Incidents
-              </Link>
-              <Link
-                href="/dashboard/announcements"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-              >
-                <Megaphone className="h-4 w-4" />
-                Announcements
-              </Link>
+            ))}
             </nav>
           </div>
         </SheetContent>
