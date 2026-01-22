@@ -9,6 +9,7 @@ type AuthContextType = {
   login: (email: string) => void;
   logout: () => void;
   switchRole: (role: 'worker' | 'manager') => void;
+  updateUser: (updates: Partial<User>) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,8 +37,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateUser = (updates: Partial<User>) => {
+    if (user) {
+      setUser(prevUser => prevUser ? { ...prevUser, ...updates } : null);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, switchRole }}>
+    <AuthContext.Provider value={{ user, login, logout, switchRole, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
