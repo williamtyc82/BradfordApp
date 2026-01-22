@@ -32,8 +32,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { UserNav } from './user-nav';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import Image from 'next/image';
 
 export function Header() {
+  const logo = PlaceHolderImages.find((img) => img.id === 'logo');
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
       <Sheet>
@@ -46,11 +49,24 @@ export function Header() {
         <SheetContent side="left" className="flex flex-col">
           <nav className="grid gap-2 text-lg font-medium">
             <Link
-              href="#"
+              href="/dashboard"
               className="flex items-center gap-2 text-lg font-semibold"
             >
-              <Package2 className="h-6 w-6" />
-              <span className="sr-only">Bradford Hub</span>
+              {logo ? (
+                <Image
+                  src={logo.imageUrl}
+                  alt={logo.description}
+                  width={150}
+                  height={40}
+                  className="object-contain"
+                  data-ai-hint={logo.imageHint}
+                />
+              ) : (
+                <>
+                  <Package2 className="h-6 w-6" />
+                  <span className="">Bradford Hub</span>
+                </>
+              )}
             </Link>
             <Link
               href="/dashboard"

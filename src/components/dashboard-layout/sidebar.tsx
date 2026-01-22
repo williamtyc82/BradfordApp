@@ -22,10 +22,13 @@ import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import Image from 'next/image';
 
 export function MainSidebar() {
   const pathname = usePathname();
   const { user, switchRole } = useAuth();
+  const logo = PlaceHolderImages.find((img) => img.id === 'logo');
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -44,8 +47,21 @@ export function MainSidebar() {
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-            <Package2 className="h-6 w-6 text-primary" />
-            <span className="">Bradford Hub</span>
+            {logo ? (
+              <Image
+                src={logo.imageUrl}
+                alt={logo.description}
+                width={150}
+                height={40}
+                className="object-contain"
+                data-ai-hint={logo.imageHint}
+              />
+            ) : (
+              <>
+                <Package2 className="h-6 w-6 text-primary" />
+                <span className="">Bradford Hub</span>
+              </>
+            )}
           </Link>
           <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
             <Bell className="h-4 w-4" />
