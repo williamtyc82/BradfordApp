@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -16,7 +15,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { UserNav } from './user-nav';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
@@ -53,7 +52,9 @@ export function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="flex flex-col p-0">
-          <div className="flex h-[80px] items-center border-b px-4 lg:px-6">
+          <SheetHeader className="flex h-[80px] flex-row items-center border-b px-4 lg:px-6">
+            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+            <SheetDescription className="sr-only">Main navigation menu for the application.</SheetDescription>
             <Link
               href="/dashboard"
               className="flex items-center gap-2 text-lg font-semibold"
@@ -74,7 +75,7 @@ export function Header() {
                 </>
               )}
             </Link>
-          </div>
+          </SheetHeader>
           <div className="flex-1 overflow-y-auto">
             <nav className="grid items-start gap-6 p-4 text-base font-medium">
             {navItems.map((item) => (
