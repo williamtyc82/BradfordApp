@@ -41,6 +41,13 @@ export function Header() {
     navItems.push({ href: '/dashboard/team-progress', label: 'Team Progress', icon: Users });
   }
 
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    // In a real application, you would implement search logic here.
+    // For now, we just prevent the page from reloading.
+    console.log("Search submitted");
+  };
+
 
   return (
     <header className="flex h-[80px] items-center gap-4 border-b bg-card px-4 lg:px-6">
@@ -101,7 +108,7 @@ export function Header() {
         </SheetContent>
       </Sheet>
       <div className="w-full flex-1">
-        <form>
+        <form onSubmit={handleSearchSubmit}>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
