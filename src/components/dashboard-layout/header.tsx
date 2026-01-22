@@ -39,7 +39,7 @@ export function Header() {
   ];
 
   if (user?.role === 'manager') {
-    navItems.push({ href: '#', label: 'Team Progress', icon: Users });
+    navItems.push({ href: '/dashboard/team-progress', label: 'Team Progress', icon: Users });
   }
 
 
@@ -76,7 +76,7 @@ export function Header() {
             </Link>
           </div>
           <div className="flex-1 overflow-y-auto">
-            <nav className="grid items-start gap-4 p-4 text-base font-medium">
+            <nav className="grid items-start gap-6 p-4 text-base font-medium">
             {navItems.map((item) => (
               <Link
                 key={item.label}

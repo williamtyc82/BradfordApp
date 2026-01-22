@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from 'next/link';
@@ -40,7 +39,7 @@ export function MainSidebar() {
   ];
 
   if (user?.role === 'manager') {
-    navItems.push({ href: '#', label: 'Team Progress', icon: Users });
+    navItems.push({ href: '/dashboard/team-progress', label: 'Team Progress', icon: Users });
   }
 
   return (
@@ -70,7 +69,7 @@ export function MainSidebar() {
           </Button>
         </div>
         <div className="flex-1">
-          <nav className="grid items-start gap-4 px-2 text-sm font-medium lg:px-4">
+          <nav className="grid items-start gap-6 px-2 text-sm font-medium lg:px-4">
             {navItems.map((item) => (
               <Link
                 key={item.label}
