@@ -12,7 +12,7 @@ import {
   Megaphone,
   Users,
 } from 'lucide-react';
-
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -23,11 +23,14 @@ import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
 import { usePathname } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export function Header() {
   const logo = PlaceHolderImages.find((img) => img.id === 'logo');
   const pathname = usePathname();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -43,9 +46,20 @@ export function Header() {
 
   const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!searchQuery.trim()) {
+      toast({
+        title: 'Search is empty',
+        description: 'Please enter a term to search for.',
+        variant: 'destructive',
+      });
+      return;
+    }
     // In a real application, you would implement search logic here.
-    // For now, we just prevent the page from reloading.
-    console.log("Search submitted");
+    // For now, we just show a toast notification.
+    toast({
+      title: 'Search Submitted',
+      description: `You searched for: "${searchQuery}"`,
+    });
   };
 
 
@@ -115,6 +129,8 @@ export function Header() {
               type="search"
               placeholder="Search..."
               className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </form>
