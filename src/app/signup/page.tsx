@@ -24,14 +24,13 @@ export default function SignUpPage() {
           </div>
         </div>
       </div>
-      <div className="hidden bg-muted lg:block">
+      <div className="hidden bg-muted lg:block relative">
         {loginImage && (
              <Image
              src={loginImage.imageUrl}
              alt={loginImage.description}
-             width="1920"
-             height="1080"
-             className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+             fill
+             className="object-cover"
              data-ai-hint={loginImage.imageHint}
            />
         )}
