@@ -1,6 +1,7 @@
+
 "use client";
 
-import { Activity, ArrowUpRight, DollarSign, Users } from "lucide-react"
+import { Activity, AlertTriangle, ArrowUpRight, DollarSign, Users } from "lucide-react"
 import { StatCard } from "./stat-card"
 import { ProgressChart } from "./progress-chart"
 import { RecentIncidents } from "./recent-incidents"
@@ -34,7 +35,7 @@ export function ManagerDashboard() {
               <StatCard 
                 title="Incidents Reported"
                 value="3"
-                icon={Siren}
+                icon={AlertTriangle}
                 description="1 new since yesterday"
               />
               <StatCard 

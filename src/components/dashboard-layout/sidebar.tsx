@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -8,7 +9,7 @@ import {
   Package2,
   BookOpen,
   ClipboardList,
-  Siren,
+  AlertTriangle,
   Megaphone,
   Users,
 } from 'lucide-react';
@@ -30,7 +31,7 @@ export function MainSidebar() {
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/dashboard/training', label: 'Training', icon: BookOpen },
     { href: '/dashboard/quizzes', label: 'Quizzes', icon: ClipboardList, badge: 3 },
-    { href: '/dashboard/incidents', label: 'Incidents', icon: Siren, badge: 2 },
+    { href: '/dashboard/incidents', label: 'Incidents', icon: AlertTriangle, badge: 2 },
     { href: '/dashboard/announcements', label: 'Announcements', icon: Megaphone },
   ];
 
