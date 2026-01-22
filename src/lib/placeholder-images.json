@@ -1,3 +1,64 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "login-background",
+      "description": "A modern logistics warehouse with workers.",
+      "imageUrl": "https://images.unsplash.com/photo-1627309366653-2dedc084cdf1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxsb2dpc3RpY3MlMjB3YXJlaG91c2V8ZW58MHx8fHwxNzY5MDQ3NTEwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "logistics warehouse"
+    },
+    {
+      "id": "avatar-1",
+      "description": "User avatar 1",
+      "imageUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjkwNzc4MDh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "avatar-2",
+      "description": "User avatar 2",
+      "imageUrl": "https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjkwNzc4MDh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "avatar-3",
+      "description": "User avatar 3",
+      "imageUrl": "https://images.unsplash.com/photo-1581403341630-a6e0b9d2d257?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc2OTAwMzgxMHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman portrait"
+    },
+    {
+      "id": "avatar-4",
+      "description": "User avatar 4",
+      "imageUrl": "https://images.unsplash.com/photo-1560250097-0b93528c311a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxtYW4lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjkwMDgzMTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "man portrait"
+    },
+    {
+      "id": "training-pdf",
+      "description": "Thumbnail for a PDF document",
+      "imageUrl": "https://images.unsplash.com/photo-1546199881-3454b82b832b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxkb2N1bWVudCUyMHBhcGVyfGVufDB8fHx8MTc2ODk5OTA5OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "document paper"
+    },
+    {
+      "id": "training-video",
+      "description": "Thumbnail for a video file",
+      "imageUrl": "https://images.unsplash.com/photo-1584224549374-995cbac1ab62?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx2aWRlbyUyMHByb2R1Y3Rpb258ZW58MHx8fHwxNzY5MDg0MzA1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "video production"
+    },
+    {
+      "id": "training-image",
+      "description": "Thumbnail for an image file",
+      "imageUrl": "https://images.unsplash.com/photo-1716915372367-c170ee1e7d24?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx3YXJlaG91c2UlMjBmb3JrbGlmdHxlbnwwfHx8fDE3NjkwODQzMDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "warehouse forklift"
+    },
+    {
+      "id": "incident-media-1",
+      "description": "Spill on a warehouse floor",
+      "imageUrl": "https://images.unsplash.com/photo-1487754336554-9809144112a6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx3ZXQlMjBmbG9vcnxlbnwwfHx8fDE3NjkwODQzMDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "wet floor"
+    },
+    {
+      "id": "incident-media-2",
+      "description": "Damaged package",
+      "imageUrl": "https://images.unsplash.com/photo-1570883886759-27e180c69e22?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxicm9rZW4lMjBib3h8ZW58MHx8fHwxNzY5MDg0MzA1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "broken box"
+    }
+  ]
 }
