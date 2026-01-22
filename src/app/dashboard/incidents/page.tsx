@@ -15,7 +15,7 @@ export default function IncidentsPage() {
                     {user?.role === 'worker' ? (
                        <ReportIncidentDialog />
                     ) : (
-                        <ReportIncidentDialog triggerButton={<></>} />
+                        <ReportIncidentDialog triggerButton={null} />
                     )}
                 </div>
             </div>
