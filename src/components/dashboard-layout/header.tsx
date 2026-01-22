@@ -1,34 +1,16 @@
 import Link from 'next/link';
 import {
-  Bell,
-  CircleUser,
   Home,
-  LineChart,
   Menu,
-  Package,
   Package2,
   Search,
-  ShoppingCart,
-  Users,
+  BookOpen,
+  ClipboardList,
+  AlertTriangle,
+  Megaphone,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { UserNav } from './user-nav';
@@ -46,8 +28,8 @@ export function Header() {
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="flex flex-col">
-          <nav className="grid gap-2 text-lg font-medium">
+        <SheetContent side="left" className="flex flex-col p-0">
+          <div className="flex items-center border-b px-4 lg:px-6 py-7">
             <Link
               href="/dashboard"
               className="flex items-center gap-2 text-lg font-semibold"
@@ -68,28 +50,46 @@ export function Header() {
                 </>
               )}
             </Link>
-            <Link
-              href="/dashboard"
-              className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-            >
-              <Home className="h-5 w-5" />
-              Dashboard
-            </Link>
-            <Link
-              href="/dashboard/training"
-              className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-            >
-              <Users className="h-5 w-5" />
-              Training
-            </Link>
-            <Link
-              href="/dashboard/quizzes"
-              className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
-            >
-              <LineChart className="h-5 w-5" />
-              Quizzes
-            </Link>
-          </nav>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <nav className="grid items-start p-4 text-base font-medium">
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+              >
+                <Home className="h-4 w-4" />
+                Dashboard
+              </Link>
+              <Link
+                href="/dashboard/training"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+              >
+                <BookOpen className="h-4 w-4" />
+                Training
+              </Link>
+              <Link
+                href="/dashboard/quizzes"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+              >
+                <ClipboardList className="h-4 w-4" />
+                Quizzes
+              </Link>
+              <Link
+                href="/dashboard/incidents"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+              >
+                <AlertTriangle className="h-4 w-4" />
+                Incidents
+              </Link>
+              <Link
+                href="/dashboard/announcements"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+              >
+                <Megaphone className="h-4 w-4" />
+                Announcements
+              </Link>
+            </nav>
+          </div>
         </SheetContent>
       </Sheet>
       <div className="w-full flex-1">
