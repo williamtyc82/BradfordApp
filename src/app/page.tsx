@@ -23,9 +23,6 @@ export default function LoginPage() {
                 />
               </div>
             )}
-            <p className="text-balance text-muted-foreground">
-              Enter your email below to login to your account
-            </p>
           </div>
           <LoginForm />
         </div>
