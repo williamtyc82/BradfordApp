@@ -4,13 +4,25 @@ import Image from 'next/image';
 
 export default function LoginPage() {
   const loginImage = PlaceHolderImages.find((img) => img.id === 'login-background');
+  const logo = PlaceHolderImages.find((img) => img.id === 'logo');
   
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
       <div className="flex items-center justify-center py-12">
         <div className="mx-auto grid w-[350px] gap-6">
-          <div className="grid gap-2 text-center">
-            <h1 className="text-3xl font-bold font-headline">Bradford Workforce Hub</h1>
+          <div className="grid gap-4 text-center">
+            {logo && (
+              <div className="flex justify-center">
+                <Image
+                  src={logo.imageUrl}
+                  alt={logo.description}
+                  width={240}
+                  height={60}
+                  className="object-contain"
+                  data-ai-hint={logo.imageHint}
+                />
+              </div>
+            )}
             <p className="text-balance text-muted-foreground">
               Enter your email below to login to your account
             </p>
