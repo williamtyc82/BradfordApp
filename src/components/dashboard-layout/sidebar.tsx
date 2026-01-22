@@ -70,7 +70,7 @@ export function MainSidebar() {
           </Button>
         </div>
         <div className="flex-1">
-          <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+          <nav className="grid items-start gap-4 px-2 text-sm font-medium lg:px-4">
             {navItems.map((item) => (
               <Link
                 key={item.label}

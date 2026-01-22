@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -75,7 +76,7 @@ export function Header() {
             </Link>
           </div>
           <div className="flex-1 overflow-y-auto">
-            <nav className="grid items-start p-4 text-base font-medium">
+            <nav className="grid items-start gap-4 p-4 text-base font-medium">
             {navItems.map((item) => (
               <Link
                 key={item.label}
