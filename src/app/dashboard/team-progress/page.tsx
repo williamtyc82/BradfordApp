@@ -3,21 +3,25 @@
 
 import { TeamProgressTable } from "@/components/team-progress/team-progress-table";
 import { useAuth } from "@/hooks/use-auth";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function TeamProgressPage() {
     const { user } = useAuth();
+    const router = useRouter();
   
     useEffect(() => {
-        // Redirect if not a manager
+        // The layout handles loading and the case where user is null.
+        // We only need to check for the manager role here.
         if (user && user.role !== 'manager') {
-            redirect('/dashboard');
+            router.push('/dashboard');
         }
-    }, [user]);
+    }, [user, router]);
 
+    // The layout shows a loading spinner, so we can assume user is loaded here.
+    // This provides a fallback UI if the redirect hasn't happened yet.
     if (user?.role !== 'manager') {
-        return <div className="flex items-center justify-center h-full">Loading...</div>; // Or a spinner/access denied
+        return <div className="flex items-center justify-center h-full">Redirecting...</div>; 
     }
 
     return (

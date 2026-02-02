@@ -5,21 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { redirect } from 'next/navigation';
-import { useEffect } from 'react';
 import { Separator } from '@/components/ui/separator';
 
 export default function SettingsPage() {
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (!user) {
-      redirect('/');
-    }
-  }, [user]);
-
   if (!user) {
-    return <div className="flex items-center justify-center h-full">Loading...</div>;
+    // Handled by layout, but good practice for a guard
+    return null;
   }
 
   return (

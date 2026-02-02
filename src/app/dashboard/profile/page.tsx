@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { redirect } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,15 +18,14 @@ export default function ProfilePage() {
   const [displayName, setDisplayName] = useState(user?.displayName || '');
 
   useEffect(() => {
-    if (!user) {
-      redirect('/');
-    } else {
+    if (user) {
       setDisplayName(user.displayName);
     }
   }, [user]);
 
   if (!user) {
-    return <div className="flex items-center justify-center h-full">Loading...</div>;
+    // Handled by layout, but good practice to have a guard
+    return null;
   }
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
