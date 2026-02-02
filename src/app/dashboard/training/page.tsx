@@ -19,13 +19,13 @@ import { collection, query, orderBy } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TrainingPage() {
-    const { user, loading: authIsLoading } = useAuth();
-    const { firestore } = useFirebase();
+    const { user: appUser } = useAuth();
+    const { firestore, user: firebaseUser, isUserLoading: authIsLoading } = useFirebase();
 
     const trainingCollectionRef = useMemoFirebase(() => {
-        if (!firestore || !user) return null;
+        if (!firestore || !firebaseUser) return null;
         return query(collection(firestore, "trainingMaterials"), orderBy("uploadedAt", "desc"));
-    }, [firestore, user]);
+    }, [firestore, firebaseUser]);
     
     const { data: materials, isLoading: materialsIsLoading } = useCollection<TrainingMaterial>(trainingCollectionRef);
     
@@ -55,7 +55,7 @@ export default function TrainingPage() {
                     <DropdownMenuCheckboxItem>Emergency</DropdownMenuCheckboxItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-                {user?.role === 'manager' && <UploadMaterialDialog />}
+                {appUser?.role === 'manager' && <UploadMaterialDialog />}
                 </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
