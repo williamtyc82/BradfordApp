@@ -12,7 +12,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { Textarea } from "../ui/textarea"
 import { Upload } from "lucide-react"
@@ -21,9 +20,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { uploadTrainingMaterialAction } from "@/app/actions/training";
 import { useState } from "react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
+import { useFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
+import { addDoc, collection } from "firebase/firestore";
 
 
 const formSchema = z.object({
@@ -39,6 +39,7 @@ type FormData = z.infer<typeof formSchema>;
 
 export function UploadMaterialDialog() {
   const { user } = useAuth();
+  const { firestore } = useFirebase();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   
@@ -65,20 +66,39 @@ export function UploadMaterialDialog() {
     }
   };
 
-  const onSubmit = async (data: FormData) => {
-    if (!user) {
-        toast({ title: "Not authenticated", variant: "destructive" });
-        return;
+  const onSubmit = (data: FormData) => {
+    if (!user || !firestore) {
+        toast({ title: "Not authenticated or Firestore not available", variant: "destructive" });
+        return Promise.reject(new Error("Not authenticated or Firestore not available"));
     }
-    const result = await uploadTrainingMaterialAction({ ...data, uploadedBy: user.id });
 
-    if (result.success) {
-        toast({ title: "Upload successful!", description: `"${data.title}" has been added.` });
-        form.reset();
-        setOpen(false);
-    } else {
-        toast({ title: "Upload Failed", description: result.error || "An error occurred.", variant: "destructive" });
-    }
+    const materialData = {
+        ...data,
+        uploadedBy: user.id,
+        uploadedAt: new Date().toISOString(),
+        views: 0,
+    };
+    
+    const trainingCollectionRef = collection(firestore, "trainingMaterials");
+
+    return addDoc(trainingCollectionRef, materialData)
+        .then((docRef) => {
+            toast({ title: "Upload successful!", description: `"${data.title}" has been added.` });
+            form.reset();
+            setOpen(false);
+        })
+        .catch(async (e: any) => {
+            const contextualError = new FirestorePermissionError({
+              operation: 'create',
+              path: trainingCollectionRef.path,
+              requestResourceData: materialData,
+            });
+            errorEmitter.emit('permission-error', contextualError);
+
+            toast({ title: "Upload Failed", description: "Could not upload material. Check permissions.", variant: "destructive" });
+            // Re-throw to make sure react-hook-form knows the submission failed
+            throw e;
+        });
   }
 
   return (
