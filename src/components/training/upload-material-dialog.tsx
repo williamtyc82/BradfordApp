@@ -27,33 +27,27 @@ import { addDoc, collection } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 
-const formSchema = z.object({
-    title: z.string().min(3, "Title must be at least 3 characters"),
-    description: z.string().min(10, "Description must be at least 10 characters"),
-    category: z.string({ required_error: "Please select a category." }),
-    fileType: z.enum(["pdf", "video", "image"], { required_error: "Please select a file type." }),
-    fileURL: z.string().optional(),
-}).superRefine((data, ctx) => {
-    if (data.fileType === 'video') {
-        if (!data.fileURL || data.fileURL.trim() === '') {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "A URL is required for video materials.",
-                path: ["fileURL"],
-            });
-            return;
-        }
-        const urlCheck = z.string().url("A valid URL is required for videos.").safeParse(data.fileURL);
-        if (!urlCheck.success) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.invalid_string,
-                validation: 'url',
-                message: "A valid URL is required for videos.",
-                path: ["fileURL"],
-            });
-        }
-    }
+const baseSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  category: z.string({ required_error: "Please select a category." }),
 });
+
+const videoSchema = baseSchema.extend({
+  fileType: z.literal("video"),
+  fileURL: z.string().url("A valid URL is required for videos."),
+  file: z.any().optional(),
+});
+
+const uploadSchema = baseSchema.extend({
+  fileType: z.union([z.literal("pdf"), z.literal("image")]),
+  file: z.any()
+    .refine((files): files is FileList => files instanceof FileList, "File is required.")
+    .refine(files => files.length > 0, "A file is required."),
+  fileURL: z.string().optional(),
+});
+
+const formSchema = z.discriminatedUnion("fileType", [videoSchema, uploadSchema]);
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -63,13 +57,13 @@ export function UploadMaterialDialog() {
   const { firestore, storage } = useFirebase();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
         title: "",
         description: "",
+        fileType: "video",
         fileURL: "",
     }
   });
@@ -77,34 +71,31 @@ export function UploadMaterialDialog() {
   const { formState: { isSubmitting }, watch } = form;
   const fileType = watch("fileType");
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0] || null;
-    setFile(selectedFile);
-  };
-
   const onSubmit = async (data: FormData) => {
     if (!user || !firestore || !storage) {
         toast({ title: "Services not available", variant: "destructive" });
         return;
     }
 
-    let materialUrl = data.fileURL || '';
+    let materialUrl = '';
 
-    if ((data.fileType === 'pdf' || data.fileType === 'image')) {
-        if (!file) {
-            toast({ title: "File required", description: `Please select a ${data.fileType} file to upload.`, variant: "destructive" });
-            return;
-        }
-
-        try {
+    try {
+        if (data.fileType === 'video') {
+            materialUrl = data.fileURL;
+        } else {
+            const file = data.file[0];
+            if (!file) {
+                 toast({ title: "File required", description: `Please select a ${data.fileType} file to upload.`, variant: "destructive" });
+                 return;
+            }
             const storageRef = ref(storage, `training-materials/${user.id}/${Date.now()}-${file.name}`);
             const uploadResult = await uploadBytes(storageRef, file);
             materialUrl = await getDownloadURL(uploadResult.ref);
-        } catch (uploadError) {
-            console.error("File upload error:", uploadError);
-            toast({ title: "Upload Failed", description: "Could not upload file to storage.", variant: "destructive" });
-            return;
         }
+    } catch (uploadError) {
+        console.error("File upload error:", uploadError);
+        toast({ title: "Upload Failed", description: "Could not upload file to storage.", variant: "destructive" });
+        return;
     }
 
     const materialData = {
@@ -124,7 +115,6 @@ export function UploadMaterialDialog() {
         await addDoc(trainingCollectionRef, materialData);
         toast({ title: "Upload successful!", description: `"${data.title}" has been added.` });
         form.reset();
-        setFile(null);
         setOpen(false);
     } catch (e: any) {
         const contextualError = new FirestorePermissionError({
@@ -244,17 +234,24 @@ export function UploadMaterialDialog() {
                 )}
 
                 {(fileType === 'pdf' || fileType === 'image') && (
-                     <FormItem>
-                        <FormLabel>{fileType === 'pdf' ? 'PDF File' : 'Image File'}</FormLabel>
-                        <FormControl>
-                            <Input 
-                                type="file" 
-                                accept={fileType === 'pdf' ? '.pdf' : 'image/*'}
-                                onChange={handleFileChange}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
+                     <FormField
+                        control={form.control}
+                        name="file"
+                        render={({ field: { onChange, ...fieldProps } }) => (
+                            <FormItem>
+                                <FormLabel>{fileType === 'pdf' ? 'PDF File' : 'Image File'}</FormLabel>
+                                <FormControl>
+                                    <Input 
+                                        type="file" 
+                                        accept={fileType === 'pdf' ? '.pdf' : 'image/*'}
+                                        onChange={(event) => onChange(event.target.files)}
+                                        {...fieldProps}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 )}
                
                 <DialogFooter>
