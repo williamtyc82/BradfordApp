@@ -19,10 +19,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (email: string) => {
     // This is a mock login. In a real app, you'd verify credentials.
-    // For now, we'll just find a user and set them. Default to worker.
-    const potentialUser = placeholderUsers.find(u => u.role === 'worker');
-    if (potentialUser) {
-      setUser(potentialUser);
+    // Find an existing user by email. This handles manager and worker logins.
+    const existingUser = placeholderUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+    if (existingUser) {
+      setUser(existingUser);
+    } else {
+      // If no user exists, it's a new signup. Default to a generic worker.
+      const defaultWorker = placeholderUsers.find(u => u.role === 'worker');
+      if (defaultWorker) {
+        setUser(defaultWorker);
+      }
     }
   };
 
