@@ -196,16 +196,17 @@ service cloud.firestore {
     }
     
     /**
-     * @description Locks down the roles_manager collection.
+     * @description Secures the manager role assignment.
      * @path /roles_manager/{userId}
-     * @allow (No operations) This collection is used by other rules via `exists()` but should never be directly accessed by a client.
-     * @deny (all) All read and write operations from the client are forbidden.
-     * @principle Secures the authorization mechanism itself. This collection should only be modified by a trusted server-side process.
+     * @allow (get) A user can check for their own manager status.
+     * @allow (create) A user can be designated as a manager during signup if they use the specific manager email.
+     * @deny (all) All other client operations are forbidden to prevent unauthorized role changes.
+     * @principle Secures the authorization mechanism. This collection is only written to during initial user creation.
      */
     match /roles_manager/{userId} {
-      allow get: if false;
+      allow get: if isOwner(userId);
+      allow create: if request.auth.token.email == 'manager@bradford.co' && request.auth.uid == userId;
       allow list: if false;
-      allow create: if false;
       allow update: if false;
       allow delete: if false;
     }

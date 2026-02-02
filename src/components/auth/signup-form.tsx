@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -42,17 +43,25 @@ export function SignUpForm() {
             // Update Firebase Auth profile
             await updateProfile(user, { displayName: fullName, photoURL: `https://picsum.photos/seed/${user.uid}/100/100` });
 
+            const isManager = email === 'manager@bradford.co';
+
             // Create user document in Firestore
             const userDocRef = doc(firestore, "users", user.uid);
             await setDoc(userDocRef, {
                 id: user.uid,
                 email: user.email,
                 displayName: fullName,
-                role: 'worker', // All signups are workers by default
+                role: isManager ? 'manager' : 'worker',
                 photoURL: `https://picsum.photos/seed/${user.uid}/100/100`,
                 createdAt: new Date().toISOString(),
                 lastLogin: new Date().toISOString(),
             });
+
+            // If the user is a manager, create the role document in roles_manager
+            if (isManager) {
+                const managerRoleDocRef = doc(firestore, "roles_manager", user.uid);
+                await setDoc(managerRoleDocRef, { createdAt: new Date().toISOString() });
+            }
             
             // Create user progress document
             const progressDocRef = doc(firestore, "userProgress", user.uid);
