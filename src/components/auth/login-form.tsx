@@ -44,9 +44,16 @@ export function LoginForm() {
       router.push('/dashboard');
     } catch (error: any) {
       console.error("Login failed:", error);
+      let description = "An unknown error occurred. Please try again.";
+      if (error.code === 'auth/invalid-credential') {
+        description = "Incorrect email or password. If you are trying to log in as a manager for the first time, please sign up first using the 'manager@bradford.co' email.";
+      } else if (error.message) {
+        description = error.message;
+      }
+      
       toast({
         title: "Login Failed",
-        description: error.message || "Please check your credentials and try again.",
+        description: description,
         variant: "destructive",
       });
     } finally {
