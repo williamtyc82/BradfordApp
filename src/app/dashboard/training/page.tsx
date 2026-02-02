@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { TrainingCard } from "@/components/training/training-card";
-import { trainingMaterials } from "@/lib/placeholder-data";
 import { Upload, ListFilter } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { UploadMaterialDialog } from "@/components/training/upload-material-dialog";
@@ -14,9 +13,21 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
+import { useCollection, useFirebase, useMemoFirebase } from "@/firebase";
+import type { TrainingMaterial } from "@/lib/types";
+import { collection, query, orderBy } from "firebase/firestore";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TrainingPage() {
     const { user } = useAuth();
+    const { firestore } = useFirebase();
+
+    const trainingCollectionRef = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, "trainingMaterials"), orderBy("uploadedAt", "desc"));
+    }, [firestore]);
+    
+    const { data: materials, isLoading } = useCollection<TrainingMaterial>(trainingCollectionRef);
     
     return (
         <div className="flex-1 space-y-4">
@@ -46,9 +57,15 @@ export default function TrainingPage() {
                 </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {trainingMaterials.map(material => (
+                {isLoading && Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-96" />)}
+                {materials?.map(material => (
                     <TrainingCard key={material.id} material={material} />
                 ))}
+                 {!isLoading && materials?.length === 0 && (
+                    <div className="col-span-full text-center text-muted-foreground py-12">
+                        No training materials have been uploaded yet.
+                    </div>
+                )}
             </div>
         </div>
     )

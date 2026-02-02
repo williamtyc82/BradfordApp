@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -13,10 +15,61 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { Textarea } from "../ui/textarea"
 import { Upload } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
+import { uploadTrainingMaterialAction } from "@/app/actions/training";
+import { useState } from "react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
+
+
+const formSchema = z.object({
+    title: z.string().min(3, "Title must be at least 3 characters"),
+    description: z.string().min(10, "Description must be at least 10 characters"),
+    category: z.string({ required_error: "Please select a category." }),
+    fileType: z.enum(["pdf", "video", "image", "url"], { required_error: "Please select a file type." }),
+    fileURL: z.string().url("Please enter a valid URL"),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
 
 export function UploadMaterialDialog() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+        title: "",
+        description: "",
+        fileURL: "",
+    }
+  });
+
+  const { formState: { isSubmitting } } = form;
+
+  const onSubmit = async (data: FormData) => {
+    if (!user) {
+        toast({ title: "Not authenticated", variant: "destructive" });
+        return;
+    }
+    const result = await uploadTrainingMaterialAction({ ...data, uploadedBy: user.id });
+
+    if (result.success) {
+        toast({ title: "Upload successful!", description: `"${data.title}" has been added.` });
+        form.reset();
+        setOpen(false);
+    } else {
+        toast({ title: "Upload Failed", description: result.error || "An error occurred.", variant: "destructive" });
+    }
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" className="h-8 gap-1">
             <Upload className="h-3.5 w-3.5" />
@@ -27,48 +80,103 @@ export function UploadMaterialDialog() {
         <DialogHeader>
           <DialogTitle>Upload New Material</DialogTitle>
           <DialogDescription>
-            Add a new training document, video, or image to the library.
+            Add a new training document, video, or link to the library.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="title" className="text-right">
-              Title
-            </Label>
-            <Input id="title" className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="description" className="text-right">
-              Description
-            </Label>
-            <Textarea id="description" className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="category" className="text-right">
-                Category
-            </Label>
-            <Select>
-                <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="safety">Safety</SelectItem>
-                    <SelectItem value="operations">Operations</SelectItem>
-                    <SelectItem value="emergency">Emergency</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="file" className="text-right">
-              File
-            </Label>
-            <Input id="file" type="file" className="col-span-3" />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button type="submit">Upload</Button>
-        </DialogFooter>
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+                <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Title</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g. Advanced Forklift Techniques" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Description</FormLabel>
+                            <FormControl>
+                                <Textarea placeholder="A brief summary of the material" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a category" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="Safety">Safety</SelectItem>
+                                    <SelectItem value="Operations">Operations</SelectItem>
+                                    <SelectItem value="Emergency">Emergency</SelectItem>
+                                    <SelectItem value="Other">Other</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="fileType"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>File Type</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a file type" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="url">URL</SelectItem>
+                                    <SelectItem value="pdf">PDF</SelectItem>
+                                    <SelectItem value="video">Video</SelectItem>
+                                    <SelectItem value="image">Image</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="fileURL"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>URL</FormLabel>
+                            <FormControl>
+                                <Input placeholder="https://example.com/document.pdf" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <DialogFooter>
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? "Uploading..." : "Upload"}
+                    </Button>
+                </DialogFooter>
+            </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

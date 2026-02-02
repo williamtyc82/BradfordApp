@@ -3,11 +3,12 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useFirebase } from '@/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg role="img" viewBox="0 0 24 24" {...props}>
@@ -20,36 +21,48 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export function LoginForm() {
   const router = useRouter();
-  const { login } = useAuth();
   const { toast } = useToast();
-  const [email, setEmail] = useState('');
+  const { auth } = useFirebase();
+  const [email, setEmail] = useState('worker1@bradford.co');
+  const [password, setPassword] = useState('password123');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Basic email validation
-    if (!email || !email.includes('@')) {
-      toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address.",
-        variant: "destructive",
-      });
-      return;
+    setLoading(true);
+    if(!auth) {
+        toast({ title: "Auth service not available", variant: "destructive" });
+        setLoading(false);
+        return;
     }
-    login(email);
-    toast({
-      title: "Login Successful",
-      description: "Welcome back!",
-    });
-    router.push('/dashboard');
-  };
-
-  const handleGoogleSignIn = () => {
-    login('manager@bradford.co'); // Mock Google sign-in
-    toast({
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({
         title: "Login Successful",
         description: "Welcome back!",
       });
-    router.push('/dashboard');
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      toast({
+        title: "Login Failed",
+        description: error.message || "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = () => {
+    // In a real app, you would use signInWithPopup(auth, new GoogleAuthProvider());
+    // For this demo, we'll just sign in as the manager.
+    setEmail('manager@bradford.co');
+    setPassword('password123');
+    toast({
+      title: "Manager Login",
+      description: "Click 'Login' to sign in as manager@bradford.co",
+    });
   };
 
   return (
@@ -63,6 +76,7 @@ export function LoginForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={loading}
         />
       </div>
       <div className="grid gap-2">
@@ -75,12 +89,19 @@ export function LoginForm() {
             Forgot your password?
           </Link>
         </div>
-        <Input id="password" type="password" required defaultValue="password123"/>
+        <Input 
+            id="password" 
+            type="password" 
+            required 
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
+        />
       </div>
-      <Button type="submit" className="w-full">
-        Login
+      <Button id="login-button" type="submit" className="w-full" disabled={loading}>
+        {loading ? 'Logging in...' : 'Login'}
       </Button>
-      <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignIn}>
+      <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignIn} disabled={loading}>
         <GoogleIcon className="mr-2 h-4 w-4"/>
         Login with Google
       </Button>

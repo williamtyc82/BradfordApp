@@ -14,14 +14,23 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
+import { useFirebase } from "@/firebase";
+import { Skeleton } from "../ui/skeleton";
 
 export function UserNav() {
-  const { user, logout } = useAuth();
+  const { user, loading } = useAuth();
+  const { auth } = useFirebase();
   const router = useRouter();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    if (auth) {
+        await auth.signOut();
+    }
     router.push('/');
+  }
+
+  if (loading) {
+    return <Skeleton className="h-9 w-9 rounded-full" />;
   }
 
   if (!user) return null;
