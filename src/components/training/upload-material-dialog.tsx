@@ -32,12 +32,27 @@ const formSchema = z.object({
     description: z.string().min(10, "Description must be at least 10 characters"),
     category: z.string({ required_error: "Please select a category." }),
     fileType: z.enum(["pdf", "video", "image"], { required_error: "Please select a file type." }),
-    fileURL: z.string().url("A valid URL is required for videos.").optional(),
-}).refine(data => {
-    return data.fileType !== 'video' || !!data.fileURL;
-}, {
-    message: "A URL is required for video materials.",
-    path: ["fileURL"],
+    fileURL: z.string().optional(),
+}).superRefine((data, ctx) => {
+    if (data.fileType === 'video') {
+        if (!data.fileURL || data.fileURL.trim() === '') {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "A URL is required for video materials.",
+                path: ["fileURL"],
+            });
+            return;
+        }
+        const urlCheck = z.string().url("A valid URL is required for videos.").safeParse(data.fileURL);
+        if (!urlCheck.success) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.invalid_string,
+                validation: 'url',
+                message: "A valid URL is required for videos.",
+                path: ["fileURL"],
+            });
+        }
+    }
 });
 
 type FormData = z.infer<typeof formSchema>;
