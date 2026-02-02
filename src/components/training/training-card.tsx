@@ -16,6 +16,12 @@ export function TrainingCard({ material }: { material: TrainingMaterial }) {
     const Icon = typeIconMap[material.fileType];
     const image = PlaceHolderImages.find(img => img.id.startsWith(`training-${material.fileType}`));
 
+    const handleViewMaterial = () => {
+        if (material.fileURL) {
+            window.open(material.fileURL, '_blank', 'noopener,noreferrer');
+        }
+    }
+
     return (
         <Card className="flex flex-col">
             <CardHeader className="pb-4">
@@ -38,7 +44,7 @@ export function TrainingCard({ material }: { material: TrainingMaterial }) {
                 <Badge variant="secondary">{material.category}</Badge>
             </CardContent>
             <CardFooter>
-                <Button className="w-full">
+                <Button className="w-full" onClick={handleViewMaterial}>
                     <Icon className="mr-2 h-4 w-4" />
                     View Material
                 </Button>

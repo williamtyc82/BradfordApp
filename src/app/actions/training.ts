@@ -11,8 +11,8 @@ const formSchema = z.object({
     title: z.string().min(3, "Title must be at least 3 characters"),
     description: z.string().min(10, "Description must be at least 10 characters"),
     category: z.string(),
-    fileType: z.enum(["pdf", "video", "image", "url"]),
-    fileURL: z.string().url("Please enter a valid URL"),
+    fileType: z.enum(["pdf", "video", "image"]),
+    fileURL: z.string().min(1, "A file or URL is required."),
     uploadedBy: z.string(),
 });
 

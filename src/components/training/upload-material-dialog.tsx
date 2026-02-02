@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button"
@@ -16,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Textarea } from "../ui/textarea"
 import { Upload } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -29,8 +30,8 @@ const formSchema = z.object({
     title: z.string().min(3, "Title must be at least 3 characters"),
     description: z.string().min(10, "Description must be at least 10 characters"),
     category: z.string({ required_error: "Please select a category." }),
-    fileType: z.enum(["pdf", "video", "image", "url"], { required_error: "Please select a file type." }),
-    fileURL: z.string().url("Please enter a valid URL"),
+    fileType: z.enum(["pdf", "video", "image"], { required_error: "Please select a file type." }),
+    fileURL: z.string().min(1, "A file or URL is required"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -50,7 +51,19 @@ export function UploadMaterialDialog() {
     }
   });
 
-  const { formState: { isSubmitting } } = form;
+  const { formState: { isSubmitting }, watch, setValue } = form;
+  const fileType = watch("fileType");
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setValue("fileURL", reader.result as string, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const onSubmit = async (data: FormData) => {
     if (!user) {
@@ -84,7 +97,7 @@ export function UploadMaterialDialog() {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
                 <FormField
                     control={form.control}
                     name="title"
@@ -139,37 +152,55 @@ export function UploadMaterialDialog() {
                     name="fileType"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>File Type</FormLabel>
+                            <FormLabel>Material Type</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a file type" />
+                                    <SelectValue placeholder="Select a material type" />
                                 </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    <SelectItem value="url">URL</SelectItem>
-                                    <SelectItem value="pdf">PDF</SelectItem>
-                                    <SelectItem value="video">Video</SelectItem>
-                                    <SelectItem value="image">Image</SelectItem>
+                                    <SelectItem value="video">Video (URL)</SelectItem>
+                                    <SelectItem value="pdf">PDF (Upload)</SelectItem>
+                                    <SelectItem value="image">Image (Upload)</SelectItem>
                                 </SelectContent>
                             </Select>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-                <FormField
-                    control={form.control}
-                    name="fileURL"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>URL</FormLabel>
-                            <FormControl>
-                                <Input placeholder="https://example.com/document.pdf" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                
+                {fileType === 'video' && (
+                     <FormField
+                        control={form.control}
+                        name="fileURL"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Video URL</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="https://youtube.com/watch?v=..." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
+
+                {(fileType === 'pdf' || fileType === 'image') && (
+                     <FormItem>
+                        <FormLabel>{fileType === 'pdf' ? 'PDF File' : 'Image File'}</FormLabel>
+                        <FormControl>
+                            <Input 
+                                type="file" 
+                                accept={fileType === 'pdf' ? '.pdf' : 'image/*'}
+                                onChange={handleFileChange}
+                            />
+                        </FormControl>
+                         {/* Manually display error for fileURL since the input is not a direct RHF component */}
+                        <FormMessage>{form.formState.errors.fileURL?.message}</FormMessage>
+                    </FormItem>
+                )}
+               
                 <DialogFooter>
                     <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? "Uploading..." : "Upload"}
