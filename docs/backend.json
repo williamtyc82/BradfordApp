@@ -1,0 +1,519 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user within the Bradford Logistic workforce management system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user (worker or manager)."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the user's profile photo.",
+          "format": "uri"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp of when the user account was created.",
+          "format": "date-time"
+        },
+        "lastLogin": {
+          "type": "string",
+          "description": "Timestamp of the user's last login.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "displayName",
+        "role"
+      ]
+    },
+    "TrainingMaterial": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TrainingMaterial",
+      "type": "object",
+      "description": "Represents a training material document or video within the system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the training material entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the training material."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the training material."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the training material."
+        },
+        "fileURL": {
+          "type": "string",
+          "description": "URL of the training material file.",
+          "format": "uri"
+        },
+        "fileType": {
+          "type": "string",
+          "description": "Type of the training material file (e.g., PDF, MP4, URL)."
+        },
+        "uploadedBy": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N TrainingMaterial).  ID of the user who uploaded the material."
+        },
+        "uploadedAt": {
+          "type": "string",
+          "description": "Timestamp of when the training material was uploaded.",
+          "format": "date-time"
+        },
+        "views": {
+          "type": "number",
+          "description": "Number of times the training material has been viewed."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "category",
+        "fileURL",
+        "fileType",
+        "uploadedBy",
+        "uploadedAt"
+      ]
+    },
+    "Quiz": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Quiz",
+      "type": "object",
+      "description": "Represents a quiz within the system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the quiz entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the quiz."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the quiz."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the quiz."
+        },
+        "questions": {
+          "type": "array",
+          "description": "Array of questions in the quiz.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration of the quiz in minutes."
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Quiz). ID of the user who created the quiz."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp of when the quiz was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "category",
+        "questions",
+        "duration",
+        "createdBy",
+        "createdAt"
+      ]
+    },
+    "QuizResult": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "QuizResult",
+      "type": "object",
+      "description": "Represents the result of a user taking a quiz.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the quiz result entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N QuizResult). ID of the user who took the quiz."
+        },
+        "quizId": {
+          "type": "string",
+          "description": "Reference to Quiz. (Relationship: Quiz 1:N QuizResult). ID of the quiz that was taken."
+        },
+        "score": {
+          "type": "number",
+          "description": "Score achieved on the quiz."
+        },
+        "totalPoints": {
+          "type": "number",
+          "description": "Total possible points on the quiz."
+        },
+        "answers": {
+          "type": "array",
+          "description": "Array of user's answers to the quiz questions.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "Timestamp of when the quiz was completed.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "quizId",
+        "score",
+        "totalPoints",
+        "answers",
+        "completedAt"
+      ]
+    },
+    "Incident": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Incident",
+      "type": "object",
+      "description": "Represents an incident report submitted by a worker.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the incident entity."
+        },
+        "reportedBy": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Incident). ID of the user who reported the incident."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the incident report."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the incident."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the incident."
+        },
+        "location": {
+          "type": "string",
+          "description": "Location where the incident occurred."
+        },
+        "severity": {
+          "type": "string",
+          "description": "Severity level of the incident."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the incident (e.g., Pending, In Progress, Resolved)."
+        },
+        "mediaURLs": {
+          "type": "array",
+          "description": "URLs of media files (images/videos) attached to the incident report.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reportedAt": {
+          "type": "string",
+          "description": "Timestamp of when the incident was reported.",
+          "format": "date-time"
+        },
+        "resolvedAt": {
+          "type": "string",
+          "description": "Timestamp of when the incident was resolved (nullable).",
+          "format": "date-time"
+        },
+        "managerComments": {
+          "type": "array",
+          "description": "Array of comments from managers regarding the incident.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "reportedBy",
+        "title",
+        "description",
+        "category",
+        "location",
+        "severity",
+        "status",
+        "mediaURLs",
+        "reportedAt"
+      ]
+    },
+    "Announcement": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Announcement",
+      "type": "object",
+      "description": "Represents an announcement or event posted by a manager.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the announcement entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the announcement."
+        },
+        "content": {
+          "type": "string",
+          "description": "Content of the announcement."
+        },
+        "priority": {
+          "type": "string",
+          "description": "Priority level of the announcement (e.g., Normal, Important, Urgent)."
+        },
+        "postedBy": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Announcement). ID of the user who posted the announcement."
+        },
+        "postedAt": {
+          "type": "string",
+          "description": "Timestamp of when the announcement was posted.",
+          "format": "date-time"
+        },
+        "expiresAt": {
+          "type": "string",
+          "description": "Timestamp of when the announcement expires (nullable).",
+          "format": "date-time"
+        },
+        "readBy": {
+          "type": "array",
+          "description": "Array of user IDs who have read the announcement.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "content",
+        "priority",
+        "postedBy",
+        "postedAt"
+      ]
+    },
+    "UserProgress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProgress",
+      "type": "object",
+      "description": "Represents the progress of a user in the system.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:1 UserProgress). ID of the user whose progress is being tracked."
+        },
+        "completedMaterials": {
+          "type": "array",
+          "description": "Array of training material IDs that the user has completed.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "quizzesTaken": {
+          "type": "array",
+          "description": "Array of quiz IDs that the user has taken.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "totalScore": {
+          "type": "number",
+          "description": "Total score of the user across all quizzes."
+        },
+        "lastActivity": {
+          "type": "string",
+          "description": "Timestamp of the user's last activity.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "completedMaterials",
+        "quizzesTaken",
+        "totalScore",
+        "lastActivity"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. Accessible only to the authenticated user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/trainingMaterials/{trainingMaterialId}",
+        "definition": {
+          "entityName": "TrainingMaterial",
+          "schema": {
+            "$ref": "#/backend/entities/TrainingMaterial"
+          },
+          "description": "Stores training materials uploaded by managers. Accessible to all authenticated users for reading. Managers can create, update, and delete.",
+          "params": [
+            {
+              "name": "trainingMaterialId",
+              "description": "The unique identifier of the training material."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/quizzes/{quizId}",
+        "definition": {
+          "entityName": "Quiz",
+          "schema": {
+            "$ref": "#/backend/entities/Quiz"
+          },
+          "description": "Stores quiz data. Accessible to all authenticated users for reading. Managers can create, update, and delete.",
+          "params": [
+            {
+              "name": "quizId",
+              "description": "The unique identifier of the quiz."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/quizResults/{quizResultId}",
+        "definition": {
+          "entityName": "QuizResult",
+          "schema": {
+            "$ref": "#/backend/entities/QuizResult"
+          },
+          "description": "Stores quiz results. Accessible to the user who took the quiz. Limited access for managers (view only).",
+          "params": [
+            {
+              "name": "quizResultId",
+              "description": "The unique identifier of the quiz result."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/incidents/{incidentId}",
+        "definition": {
+          "entityName": "Incident",
+          "schema": {
+            "$ref": "#/backend/entities/Incident"
+          },
+          "description": "Stores incident reports submitted by workers. Accessible to all authenticated users for reading. Managers can update the status and add comments.",
+          "params": [
+            {
+              "name": "incidentId",
+              "description": "The unique identifier of the incident."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/announcements/{announcementId}",
+        "definition": {
+          "entityName": "Announcement",
+          "schema": {
+            "$ref": "#/backend/entities/Announcement"
+          },
+          "description": "Stores announcements posted by managers. Accessible to all authenticated users for reading. Managers can create, update, and delete.",
+          "params": [
+            {
+              "name": "announcementId",
+              "description": "The unique identifier of the announcement."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/userProgress/{userId}",
+        "definition": {
+          "entityName": "UserProgress",
+          "schema": {
+            "$ref": "#/backend/entities/UserProgress"
+          },
+          "description": "Stores the progress of each user.  Accessible only to the user and managers.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_manager/{userId}",
+        "definition": {
+          "entityName": "role_manager",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Indicates whether a user is a manager. The existence of a document with the user's ID means the user has manager privileges. Used for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to meet the application requirements for the Bradford Logistic workforce management system, focusing on secure data access and scalability. The structure incorporates strategies such as Authorization Independence via Denormalization and Structural Segregation to ensure that security rules are simple, robust, and easily debuggable.\n\n*   **Authorization Independence:** The structure avoids hierarchical authorization dependencies (no `get()` calls in rules). For instance, access to `trainingMaterials` is controlled by denormalizing manager status. A dedicated collection `/roles_manager/{uid}` is used. This means that a document's existence in `/roles_manager/{uid}` indicates manager privileges.  This prevents the need for reading a `users` document to determine the role, enabling atomic operations.\n*   **Structural Segregation:** Data with different access needs is segregated into different collections.  User profiles are stored in `/users/{userId}`, accessible only to the authenticated user. Training materials are stored in `/trainingMaterials/{trainingMaterialId}`, with creation and modification restricted to managers (via the `/roles_manager/{uid}` check). This simplifies the rules and reduces complexity.\n*   **Access Modeling:**\n    *   **User-Owned Data:** The `/users/{userId}` collection follows path-based ownership, ensuring that only the authenticated user can access and modify their profile.\n    *   **Role-Based Access:** The `/roles_manager/{uid}` collection uses existence-based global roles. The presence of a document with the user's ID indicates that the user has manager privileges.\n*   **QAPs Support:**\n    *   The segregation of manager-only resources (training materials, quizzes, announcements) and the use of a dedicated `/roles_manager/{uid}` collection enables secure list operations.  Rules can efficiently check for manager status without complex queries.\n    *   Non-managers can securely list training materials since the read rule on `/trainingMaterials/{trainingMaterialId}` only checks for authentication and not specific roles.\n\nThis structure ensures that the application's security requirements are met while adhering to best practices for Firestore data modeling and security rule design."
+  }
+}
