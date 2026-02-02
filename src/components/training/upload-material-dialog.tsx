@@ -39,15 +39,23 @@ const videoSchema = baseSchema.extend({
   file: z.any().optional(),
 });
 
-const uploadSchema = baseSchema.extend({
-  fileType: z.union([z.literal("pdf"), z.literal("image")]),
+const pdfSchema = baseSchema.extend({
+  fileType: z.literal("pdf"),
   file: z.any()
     .refine((files): files is FileList => files instanceof FileList, "File is required.")
     .refine(files => files.length > 0, "A file is required."),
   fileURL: z.string().optional(),
 });
 
-const formSchema = z.discriminatedUnion("fileType", [videoSchema, uploadSchema]);
+const imageSchema = baseSchema.extend({
+    fileType: z.literal("image"),
+    file: z.any()
+      .refine((files): files is FileList => files instanceof FileList, "File is required.")
+      .refine(files => files.length > 0, "A file is required."),
+    fileURL: z.string().optional(),
+});
+
+const formSchema = z.discriminatedUnion("fileType", [videoSchema, pdfSchema, imageSchema]);
 
 type FormData = z.infer<typeof formSchema>;
 
