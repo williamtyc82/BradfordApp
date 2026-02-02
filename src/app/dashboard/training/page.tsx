@@ -19,16 +19,18 @@ import { collection, query, orderBy } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TrainingPage() {
-    const { user } = useAuth();
+    const { user, loading: authIsLoading } = useAuth();
     const { firestore } = useFirebase();
 
     const trainingCollectionRef = useMemoFirebase(() => {
-        if (!firestore) return null;
+        if (!firestore || !user) return null;
         return query(collection(firestore, "trainingMaterials"), orderBy("uploadedAt", "desc"));
-    }, [firestore]);
+    }, [firestore, user]);
     
-    const { data: materials, isLoading } = useCollection<TrainingMaterial>(trainingCollectionRef);
+    const { data: materials, isLoading: materialsIsLoading } = useCollection<TrainingMaterial>(trainingCollectionRef);
     
+    const isLoading = authIsLoading || materialsIsLoading;
+
     return (
         <div className="flex-1 space-y-4">
             <div className="flex items-center justify-between space-y-2">
