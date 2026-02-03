@@ -57,7 +57,7 @@ export function ReportIncidentDialog({ triggerButton }: { triggerButton?: React.
                         Create Incident
                     </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-xl">
+                <DialogContent className="sm:max-w-xl w-[90vw] max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Create New Incident Report</DialogTitle>
                         <DialogDescription>
@@ -75,7 +75,7 @@ export function ReportIncidentDialog({ triggerButton }: { triggerButton?: React.
             <DialogTrigger asChild>
                 {triggerButton || defaultTrigger}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-xl">
+            <DialogContent className="sm:max-w-xl w-[90vw] max-h-[85dvh] overflow-y-auto !fixed !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2">
                 <DialogHeader>
                     <DialogTitle>Report New Incident</DialogTitle>
                     <DialogDescription>
@@ -149,7 +149,7 @@ function IncidentForm({ onSuccess }: { onSuccess: () => void }) {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
+                <div className="grid gap-4 py-4 pr-2">
                     <FormField
                         control={form.control}
                         name="title"
