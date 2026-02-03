@@ -87,6 +87,16 @@ export function QuizList({ quizzes, isLoading, activeCategory }: QuizListProps) 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {quizzes.map(quiz => (
                     <Card key={quiz.id} className="flex flex-col overflow-hidden border-2 border-transparent hover:border-primary/10 transition-all">
+                        {quiz.coverImage && (
+                            <div className="relative w-full aspect-video bg-muted/20">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={quiz.coverImage}
+                                    alt={quiz.title}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        )}
                         <CardHeader className="pb-3">
                             <div className="flex items-center justify-between mb-2">
                                 <Badge variant="secondary" className="bg-primary/5 text-primary hover:bg-primary/10 border-none px-2 py-0">

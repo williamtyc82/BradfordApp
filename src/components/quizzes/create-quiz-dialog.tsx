@@ -21,6 +21,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,6 +36,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { useFirebase } from "@/firebase";
 import { collection, addDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import type { Quiz, QuizQuestion } from "@/lib/types";
@@ -65,9 +67,10 @@ interface CreateQuizDialogProps {
 export function CreateQuizDialog({ quiz, open: openProp, onOpenChange: onOpenChangeProp }: CreateQuizDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isEditing = !!quiz;
-  const { firestore } = useFirebase();
+  const { firestore, storage } = useFirebase();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
 
   const { toast } = useToast();
 
@@ -115,9 +118,18 @@ export function CreateQuizDialog({ quiz, open: openProp, onOpenChange: onOpenCha
 
     setIsSubmitting(true);
     try {
+      let coverImageUrl = quiz?.coverImage;
+
+      if (coverImageFile && storage) {
+        const storageRef = ref(storage, `quizzes/covers/${user.id}/${Date.now()}-${coverImageFile.name}`);
+        const uploadResult = await uploadBytes(storageRef, coverImageFile);
+        coverImageUrl = await getDownloadURL(uploadResult.ref);
+      }
+
       if (isEditing && quiz) {
         await updateDoc(doc(firestore, "quizzes", quiz.id), {
           ...data,
+          coverImage: coverImageUrl || null,
           updatedAt: new Date().toISOString(),
         } as any);
         toast({
@@ -127,6 +139,7 @@ export function CreateQuizDialog({ quiz, open: openProp, onOpenChange: onOpenCha
       } else {
         await addDoc(collection(firestore, "quizzes"), {
           ...data,
+          coverImage: coverImageUrl || null,
           createdBy: user.id,
           createdAt: new Date().toISOString(),
         });
@@ -136,6 +149,7 @@ export function CreateQuizDialog({ quiz, open: openProp, onOpenChange: onOpenCha
         });
       }
       setOpen(false);
+      setCoverImageFile(null);
     } catch (error) {
       console.error("Error saving quiz:", error);
       toast({
@@ -248,6 +262,20 @@ export function CreateQuizDialog({ quiz, open: openProp, onOpenChange: onOpenCha
                     </FormItem>
                   )}
                 />
+              </div>
+
+
+
+              <div className="space-y-2 border rounded-lg p-4 bg-muted/30">
+                <FormLabel className="text-sm font-medium">Cover Image (Optional)</FormLabel>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setCoverImageFile(e.target.files?.[0] || null)}
+                />
+                <FormDescription className="text-xs">
+                  Upload a cover image for the quiz card.
+                </FormDescription>
               </div>
 
               <div className="space-y-4">
@@ -376,6 +404,6 @@ export function CreateQuizDialog({ quiz, open: openProp, onOpenChange: onOpenCha
           </form>
         </Form>
       </DialogContent>
-    </Dialog>
+    </Dialog >
   );
 }

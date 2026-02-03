@@ -42,6 +42,7 @@ export type Quiz = {
   duration: number; // minutes
   createdBy: string; // userId
   createdAt: string;
+  coverImage?: string;
 };
 
 export type QuizResult = {
