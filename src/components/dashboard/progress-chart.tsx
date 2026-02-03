@@ -40,6 +40,7 @@ export function ProgressChart() {
             left: 12,
             right: 12,
           }}
+          barGap={8}
         >
           <XAxis
             dataKey="month"
@@ -50,13 +51,15 @@ export function ProgressChart() {
           />
           <YAxis
             tickFormatter={(value) => `${value}%`}
+            axisLine={false}
+            tickLine={false}
           />
           <ChartTooltip
             cursor={false}
             content={<ChartTooltipContent indicator="dot" />}
           />
-          <Bar dataKey="training" fill="var(--color-training)" radius={4} />
-          <Bar dataKey="quizzes" fill="var(--color-quizzes)" radius={4} />
+          <Bar dataKey="training" fill="var(--color-training)" radius={[4, 4, 0, 0]} barSize={20} />
+          <Bar dataKey="quizzes" fill="var(--color-quizzes)" radius={[4, 4, 0, 0]} barSize={20} />
         </BarChart>
       </ChartContainer>
     </div>

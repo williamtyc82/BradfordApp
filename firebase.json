@@ -1,16 +1,10 @@
 {
   "hosting": {
-    "public": "public",
+    "source": ".",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "/manager/**",
-        "destination": "/manager/index.html"
-      }
     ]
   },
   "storage": {
