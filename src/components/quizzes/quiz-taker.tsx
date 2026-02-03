@@ -170,7 +170,11 @@ export function QuizTaker({ quiz }: { quiz: Quiz }) {
             </CardHeader>
             <CardContent>
                 <p className="text-lg font-semibold mb-4">{currentQuestion.question}</p>
-                <RadioGroup onValueChange={(val) => setSelectedAnswer(Number(val))} value={selectedAnswer?.toString()}>
+                <RadioGroup
+                    key={currentQuestionIndex}
+                    onValueChange={(val) => setSelectedAnswer(Number(val))}
+                    value={selectedAnswer !== null ? selectedAnswer.toString() : ""}
+                >
                     {currentQuestion.options.map((option, index) => (
                         <div key={index} className="flex items-center space-x-2 p-3 rounded-md border has-[:checked]:bg-muted">
                             <RadioGroupItem value={index.toString()} id={`r${index}`} />
