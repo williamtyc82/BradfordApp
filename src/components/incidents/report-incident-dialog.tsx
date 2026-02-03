@@ -75,7 +75,7 @@ export function ReportIncidentDialog({ triggerButton }: { triggerButton?: React.
             <DialogTrigger asChild>
                 {triggerButton || defaultTrigger}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-xl w-[90vw] max-h-[85dvh] overflow-y-auto !fixed !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2">
+            <DialogContent className="sm:max-w-xl w-[90vw] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Report New Incident</DialogTitle>
                     <DialogDescription>
