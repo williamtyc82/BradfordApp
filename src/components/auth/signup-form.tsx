@@ -10,106 +10,111 @@ import { useState } from 'react';
 import { useFirebase } from '@/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { Switch } from '@/components/ui/switch';
 
-const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg role="img" viewBox="0 0 24 24" {...props}>
-      <path
-        fill="currentColor"
-        d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.05 1.05-2.86 2.25-5.02 2.25-4.42 0-8.01-3.6-8.01-8.01s3.58-8.01 8.01-8.01c2.54 0 4.13 1.05 5.02 2.02l2.7-2.7C17.03 1.48 15.01 0 12.48 0 5.88 0 .01 5.88.01 12.48s5.87 12.48 12.47 12.48c6.99 0 12-4.92 12-12.02 0-.8-.08-1.58-.2-2.34z"
-      />
-    </svg>
-  );
+const MANAGER_ACCESS_CODE = "BRADFORD_MANAGER_2024";
+
+
 
 export function SignUpForm() {
-    const router = useRouter();
-    const { toast } = useToast();
-    const { auth, firestore } = useFirebase();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [fullName, setFullName] = useState('');
-    const [loading, setLoading] = useState(false);
-  
-    const handleSignUp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!auth || !firestore) {
-            toast({ title: "Services not available", variant: "destructive"});
-            return;
+  const router = useRouter();
+  const { toast } = useToast();
+  const { auth, firestore } = useFirebase();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isManagerSignup, setIsManagerSignup] = useState(false);
+  const [accessCode, setAccessCode] = useState('');
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auth || !firestore) {
+      toast({ title: "Services not available", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      let role: 'worker' | 'manager' = 'worker';
+      if (isManagerSignup) {
+        if (accessCode === MANAGER_ACCESS_CODE) {
+          role = 'manager';
+        } else {
+          throw new Error("Invalid Manager Access Code");
         }
-        setLoading(true);
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
+      }
 
-            // Update Firebase Auth profile
-            await updateProfile(user, { displayName: fullName, photoURL: `https://picsum.photos/seed/${user.uid}/100/100` });
+      // Update Firebase Auth profile
+      await updateProfile(user, { displayName: fullName, photoURL: `https://picsum.photos/seed/${user.uid}/100/100` });
 
-            const isManager = email === 'manager@bradford.co';
+      // Create user document in Firestore
+      const userDocRef = doc(firestore, "users", user.uid);
+      await setDoc(userDocRef, {
+        id: user.uid,
+        email: user.email,
+        displayName: fullName,
+        role: role,
+        photoURL: `https://picsum.photos/seed/${user.uid}/100/100`,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+      });
 
-            // Create user document in Firestore
-            const userDocRef = doc(firestore, "users", user.uid);
-            await setDoc(userDocRef, {
-                id: user.uid,
-                email: user.email,
-                displayName: fullName,
-                role: isManager ? 'manager' : 'worker',
-                photoURL: `https://picsum.photos/seed/${user.uid}/100/100`,
-                createdAt: new Date().toISOString(),
-                lastLogin: new Date().toISOString(),
-            });
+      // If the user is a manager, create the role document in roles_manager
+      if (role === 'manager') {
+        const managerRoleDocRef = doc(firestore, "roles_manager", user.uid);
+        await setDoc(managerRoleDocRef, { createdAt: new Date().toISOString() });
+      }
 
-            // If the user is a manager, create the role document in roles_manager
-            if (isManager) {
-                const managerRoleDocRef = doc(firestore, "roles_manager", user.uid);
-                await setDoc(managerRoleDocRef, { createdAt: new Date().toISOString() });
-            }
-            
-            // Create user progress document
-            const progressDocRef = doc(firestore, "userProgress", user.uid);
-            await setDoc(progressDocRef, {
-                userId: user.uid,
-                completedMaterials: [],
-                quizzesTaken: [],
-                totalScore: 0,
-                lastActivity: new Date().toISOString(),
-                trainingCompletion: 0,
-            });
+      // Create user progress document
+      const progressDocRef = doc(firestore, "userProgress", user.uid);
+      await setDoc(progressDocRef, {
+        userId: user.uid,
+        completedMaterials: [],
+        quizzesTaken: [],
+        totalScore: 0,
+        lastActivity: new Date().toISOString(),
+        trainingCompletion: 0,
+      });
 
-            toast({
-                title: "Account Created",
-                description: "Welcome to Bradford Workforce Hub!",
-            });
-            router.push('/dashboard');
-        } catch (error: any) {
-            console.error("Sign up failed:", error);
-            toast({
-                title: "Sign Up Failed",
-                description: error.message || "Could not create account.",
-                variant: "destructive",
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+      toast({
+        title: "Account Created",
+        description: "Welcome to Bradford Workforce Hub!",
+      });
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error("Sign up failed:", error);
+      let description = error.message || "Could not create account.";
 
-    const handleGoogleSignUp = () => {
-        // In a real app, this would use signInWithPopup(auth, new GoogleAuthProvider());
-        toast({
-            title: "Info",
-            description: "Google Sign-Up is not implemented in this demo. Please use email and password.",
-        });
-    };
+      if (error.code === 'auth/email-already-in-use') {
+        description = "This email is already registered. Please go to the login page to sign in.";
+      }
+
+      toast({
+        title: "Sign Up Failed",
+        description: description,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
 
   return (
     <form onSubmit={handleSignUp} className="grid gap-4">
       <div className="grid gap-2">
         <Label htmlFor="full-name">Full Name</Label>
-        <Input 
-            id="full-name" 
-            placeholder="John Doe" 
-            required 
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            disabled={loading}
+        <Input
+          id="full-name"
+          placeholder="John Doe"
+          required
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          disabled={loading}
         />
       </div>
       <div className="grid gap-2">
@@ -126,22 +131,48 @@ export function SignUpForm() {
       </div>
       <div className="grid gap-2">
         <Label htmlFor="password">Password</Label>
-        <Input 
-            id="password" 
-            type="password" 
-            required 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
+        <Input
+          id="password"
+          type="password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
         />
       </div>
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? 'Creating Account...' : 'Create an account'}
       </Button>
-      <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignUp} disabled={loading}>
-        <GoogleIcon className="mr-2 h-4 w-4"/>
-        Sign up with Google
-      </Button>
+
+
+      <div className="mt-4 pt-4 border-t">
+        <div className="flex items-center justify-between space-x-2">
+          <div className="flex flex-col space-y-1">
+            <Label htmlFor="manager-mode">Register as Manager</Label>
+            <p className="text-sm text-muted-foreground italic">Requires a valid access code</p>
+          </div>
+          <Switch
+            id="manager-mode"
+            checked={isManagerSignup}
+            onCheckedChange={setIsManagerSignup}
+            disabled={loading}
+          />
+        </div>
+
+        {isManagerSignup && (
+          <div className="grid gap-2 mt-4 animate-in fade-in slide-in-from-top-1">
+            <Label htmlFor="access-code">Manager Access Code</Label>
+            <Input
+              id="access-code"
+              placeholder="Enter code"
+              required={isManagerSignup}
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+        )}
+      </div>
     </form>
   );
 }

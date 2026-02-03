@@ -19,46 +19,46 @@ const data = [
 
 export function ProgressChart() {
   return (
-    <div className="h-[300px] w-full">
-    <ChartContainer
-      config={{
-        training: {
-          label: "Training",
-          color: "hsl(var(--chart-1))",
-        },
-        quizzes: {
-          label: "Quizzes",
-          color: "hsl(var(--chart-2))",
-        },
-      }}
-      className="h-full w-full"
-    >
-      <BarChart 
-        accessibilityLayer 
-        data={data}
-        margin={{
+    <div className="h-[300px] w-full min-w-[600px]">
+      <ChartContainer
+        config={{
+          training: {
+            label: "Training",
+            color: "hsl(var(--chart-1))",
+          },
+          quizzes: {
+            label: "Quizzes",
+            color: "hsl(var(--chart-2))",
+          },
+        }}
+        className="h-full w-full"
+      >
+        <BarChart
+          accessibilityLayer
+          data={data}
+          margin={{
             left: 12,
             right: 12,
           }}
-    >
-        <XAxis
-          dataKey="month"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          tickFormatter={(value) => value.slice(0, 3)}
-        />
-        <YAxis
-          tickFormatter={(value) => `${value}%`}
-        />
-        <ChartTooltip
-          cursor={false}
-          content={<ChartTooltipContent indicator="dot" />}
-        />
-        <Bar dataKey="training" fill="var(--color-training)" radius={4} />
-        <Bar dataKey="quizzes" fill="var(--color-quizzes)" radius={4} />
-      </BarChart>
-    </ChartContainer>
+        >
+          <XAxis
+            dataKey="month"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            tickFormatter={(value) => value.slice(0, 3)}
+          />
+          <YAxis
+            tickFormatter={(value) => `${value}%`}
+          />
+          <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent indicator="dot" />}
+          />
+          <Bar dataKey="training" fill="var(--color-training)" radius={4} />
+          <Bar dataKey="quizzes" fill="var(--color-quizzes)" radius={4} />
+        </BarChart>
+      </ChartContainer>
     </div>
   )
 }

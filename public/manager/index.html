@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Mode - Dashboard</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="./style.css">
+
+  <!-- Firebase SDKs (Compat) -->
+  <!-- Firebase SDKs (Compat) -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+  <!-- App Logic -->
+  <script defer src="./app.js"></script>
+</head>
+
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="logo">
+        <h2>AdminPanel</h2>
+      </div>
+      <nav class="nav-menu">
+        <a href="#" class="nav-item active" data-tab="dashboard">Dashboard</a>
+        <a href="#" class="nav-item" data-tab="training">Training Materials</a>
+        <a href="#" class="nav-item" data-tab="users">Users</a>
+        <a href="#" class="nav-item" data-tab="settings">Settings</a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="top-bar">
+        <h1>Manager Mode</h1>
+        <div class="user-profile">
+          <span>Manager</span>
+        </div>
+      </header>
+
+      <div id="content-area">
+        <!-- Training Materials Section -->
+        <section id="training-section" class="tab-content">
+          <div class="section-header">
+            <h2>Training Materials</h2>
+            <p>Upload and manage training documents and resources.</p>
+          </div>
+
+          <div class="upload-container">
+            <div id="drop-zone" class="drop-zone">
+              <div class="drop-zone-content">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <h3>Drag & Drop files here</h3>
+                <p>or</p>
+                <button id="browse-btn" class="btn primary">Browse Files</button>
+                <input type="file" id="file-input" multiple hidden>
+              </div>
+            </div>
+
+            <div id="upload-list" class="upload-list">
+              <!-- Upload items will appear here -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Placeholder for other sections -->
+        <section id="dashboard-section" class="tab-content active" style="display:none;">
+          <h2>Welcome to the Dashboard</h2>
+          <p>Select "Training Materials" from the sidebar to manage uploads.</p>
+        </section>
+      </div>
+    </main>
+  </div>
+
+</body>
+
+</html>

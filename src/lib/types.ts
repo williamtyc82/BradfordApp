@@ -13,11 +13,17 @@ export type TrainingMaterial = {
   title: string;
   description: string;
   category: string;
-  fileURL: string;
-  fileType: 'pdf' | 'video' | 'image';
+  fileURL?: string; // Kept for backward compatibility
+  videoURL?: string; // Kept for backward compatibility
+  fileURLs?: string[]; // Kept for backward compatibility (previously used for both docs/images)
+  documentURLs?: string[]; // Specific for documents
+  imageURLs?: string[]; // Specific for images
+  videoURLs?: string[]; // Array of video URLs
+  fileType: 'document' | 'video' | 'image' | 'mixed';
   uploadedBy: string; // userId
   uploadedAt: string;
   views: number;
+  thumbnailURL?: string; // Optional custom thumbnail URL
 };
 
 export type QuizQuestion = {

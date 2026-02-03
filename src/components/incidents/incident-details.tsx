@@ -8,12 +8,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Image from "next/image";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { Wand2, Bot } from "lucide-react";
-import { useState, useTransition } from "react";
-import { summarizeIncidentAction } from "@/app/actions/summarize";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useAuth } from "@/hooks/use-auth";
+import { useFirebase, useCollection, useMemoFirebase, useDoc } from "@/firebase";
+import { doc, updateDoc, arrayUnion, query, collection, where } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { Label } from "../ui/label";
 
 const statusVariantMap: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
     'Resolved': 'default',
@@ -27,21 +30,78 @@ const severityColorMap: { [key: string]: string } = {
     'High': 'bg-red-500'
 };
 
-export function IncidentDetails({ incident: initialIncident }: { incident: Incident }) {
-    const { user } = useAuth();
-    const reporter = placeholderUsers.find(u => u.id === initialIncident.reportedBy);
-    const [isPending, startTransition] = useTransition();
-    const [summary, setSummary] = useState<string | null>(null);
-    const [incident, setIncident] = useState(initialIncident);
+const UserInfo = ({ userId, showEmail = false }: { userId: string, showEmail?: boolean }) => {
+    const { firestore } = useFirebase();
+    // Use doc() + useDoc() for direct access (allowed by security rules "get")
+    // instead of query() + useCollection() (which counts as "list" and is restricted)
+    const userRef = useMemoFirebase(() => firestore ? doc(firestore, "users", userId) : null, [firestore, userId]);
+    // Assume User type or any
+    const { data: user, isLoading } = useDoc<any>(userRef);
 
-    const handleSummarize = () => {
-        startTransition(async () => {
-            const result = await summarizeIncidentAction(incident.description);
-            if (result.summary) {
-                setSummary(result.summary);
-            }
-        });
-    }
+    if (isLoading) return <Skeleton className="h-10 w-32" />;
+
+    return (
+        <div className="flex items-center gap-3">
+            <Avatar>
+                <AvatarImage src={user?.photoURL} />
+                <AvatarFallback>{(user?.displayName || userId).charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div>
+                <p className="font-semibold">{user?.displayName || userId}</p>
+                {showEmail && user?.email && <p className="text-sm text-muted-foreground">{user?.email}</p>}
+            </div>
+        </div>
+    );
+}
+
+export function IncidentDetails({ incident }: { incident: Incident }) {
+    const { user } = useAuth();
+    const { firestore } = useFirebase();
+    const { toast } = useToast();
+    const [comment, setComment] = useState("");
+    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+
+
+    const handleAddComment = async () => {
+        if (!comment.trim() || !firestore || !user) return;
+        setIsSubmittingComment(true);
+        try {
+            const incidentRef = doc(firestore, "incidents", incident.id);
+            await updateDoc(incidentRef, {
+                managerComments: arrayUnion({
+                    userId: user.id,
+                    comment: comment.trim(),
+                    createdAt: new Date().toISOString()
+                })
+            });
+            setComment("");
+            toast({ title: "Comment Added", description: "Your comment has been saved." });
+        } catch (error) {
+            toast({ title: "Failed to Add Comment", description: "Something went wrong.", variant: "destructive" });
+        } finally {
+            setIsSubmittingComment(false);
+        }
+    };
+
+    const handleStatusChange = async (newStatus: Incident['status']) => {
+        if (!firestore) return;
+        setIsUpdatingStatus(true);
+        try {
+            const incidentRef = doc(firestore, "incidents", incident.id);
+            await updateDoc(incidentRef, {
+                status: newStatus,
+                updatedAt: new Date().toISOString(),
+                ...(newStatus === 'Resolved' ? { resolvedAt: new Date().toISOString() } : {})
+            });
+            toast({ title: "Status Updated", description: `Incident is now ${newStatus}.` });
+        } catch (error) {
+            toast({ title: "Failed to Update Status", description: "Something went wrong.", variant: "destructive" });
+        } finally {
+            setIsUpdatingStatus(false);
+        }
+    };
 
     return (
         <div className="grid gap-4 md:grid-cols-3 md:gap-8">
@@ -60,26 +120,21 @@ export function IncidentDetails({ incident: initialIncident }: { incident: Incid
                         <div className="prose dark:prose-invert max-w-none text-card-foreground">
                             <p>{incident.description}</p>
                         </div>
-                        {summary && (
-                             <Card className="bg-muted/50">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-base flex items-center gap-2">
-                                        <Bot className="h-5 w-5 text-primary" />
-                                        AI Generated Summary
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm">{summary}</p>
-                                </CardContent>
-                            </Card>
-                        )}
-                        {isPending && <Skeleton className="h-24 w-full" />}
-                        {incident.mediaURLs.length > 0 && (
-                            <div>
-                                <h3 className="font-semibold mb-2">Attached Media</h3>
+
+                        {incident.mediaURLs && incident.mediaURLs.length > 0 && (
+                            <div className="space-y-3">
+                                <h3 className="font-semibold text-lg">Attached Media</h3>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    {incident.mediaURLs.map((url, index) => (
-                                        <Image key={index} src={url} alt={`Incident media ${index+1}`} width={300} height={200} className="rounded-lg object-cover" />
+                                    {incident.mediaURLs.map((url: string, index: number) => (
+                                        <div key={index} className="relative group cursor-zoom-in">
+                                            <Image
+                                                src={url}
+                                                alt={`Incident media ${index + 1}`}
+                                                width={300}
+                                                height={200}
+                                                className="rounded-xl object-cover aspect-video border shadow-sm transition-transform group-hover:scale-[1.02]"
+                                            />
+                                        </div>
                                     ))}
                                 </div>
                             </div>
@@ -88,99 +143,113 @@ export function IncidentDetails({ incident: initialIncident }: { incident: Incid
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Manager Comments</CardTitle>
+                        <CardTitle>Manager Timeline & Comments</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        {incident.managerComments.map((comment, i) => {
-                            const commenter = placeholderUsers.find(u => u.id === comment.userId);
-                            return (
-                                <div key={i} className="flex gap-3">
-                                    <Avatar>
-                                        <AvatarImage src={commenter?.photoURL} />
-                                        <AvatarFallback>{commenter?.displayName.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-semibold">{commenter?.displayName} <span className="text-xs text-muted-foreground font-normal">{new Date(comment.createdAt).toLocaleDateString()}</span></p>
-                                        <p className="text-sm">{comment.comment}</p>
+                    <CardContent className="space-y-6">
+                        <div className="space-y-4">
+                            {incident.managerComments && incident.managerComments.length > 0 ? (
+                                incident.managerComments.map((comment: any, i: number) => (
+                                    <div key={i} className="flex gap-4 p-4 rounded-lg bg-muted/30">
+                                        <UserInfo userId={comment.userId} />
+                                        <div className="flex-1">
+                                            <p className="text-sm text-muted-foreground mb-1">{new Date(comment.createdAt).toLocaleString()}</p>
+                                            <p className="text-sm">{comment.comment}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-center py-4 text-muted-foreground text-sm italic">No comments yet.</p>
+                            )}
+                        </div>
+
+                        {user?.role === 'manager' && (
+                            <div className="flex gap-3 pt-4 border-t">
+                                <Avatar>
+                                    <AvatarImage src={user?.photoURL || undefined} />
+                                    <AvatarFallback>{user?.displayName?.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 space-y-2">
+                                    <Textarea
+                                        placeholder="Add a management note or status update comment..."
+                                        value={comment}
+                                        onChange={(e) => setComment(e.target.value)}
+                                        className="min-h-[100px]"
+                                    />
+                                    <div className="flex justify-end">
+                                        <Button
+                                            size="sm"
+                                            onClick={handleAddComment}
+                                            disabled={isSubmittingComment || !comment.trim()}
+                                        >
+                                            {isSubmittingComment && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Add Comment
+                                        </Button>
                                     </div>
                                 </div>
-                            )
-                        })}
-                         <div className="flex gap-3">
-                            <Avatar>
-                                <AvatarImage src={user?.photoURL} />
-                                <AvatarFallback>{user?.displayName.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 space-y-2">
-                               <Textarea placeholder="Add a comment..." />
-                               <Button size="sm">Add Comment</Button>
                             </div>
-                        </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
             <div className="space-y-4">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Details</CardTitle>
+                        <CardTitle>Metadata</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4 text-sm">
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-center">
                             <span className="text-muted-foreground">Severity</span>
-                            <div className="flex items-center gap-2 font-semibold">
-                                <span className={`h-2 w-2 rounded-full ${severityColorMap[incident.severity]}`}></span>
+                            <Badge className={`${severityColorMap[incident.severity] || 'bg-gray-500'} text-white border-0`}>
                                 {incident.severity}
-                            </div>
+                            </Badge>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Category</span>
                             <span className="font-semibold">{incident.category}</span>
                         </div>
-                         <div className="flex justify-between">
+                        <div className="flex justify-between">
                             <span className="text-muted-foreground">Location</span>
-                            <span className="font-semibold text-right">{incident.location}</span>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                     <CardHeader>
-                        <CardTitle>Reporter</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex items-center gap-3">
-                        <Avatar>
-                           <AvatarImage src={reporter?.photoURL} />
-                           <AvatarFallback>{reporter?.displayName.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <p className="font-semibold">{reporter?.displayName}</p>
-                            <p className="text-sm text-muted-foreground">{reporter?.email}</p>
+                            <span className="font-semibold text-right max-w-[150px] truncate" title={incident.location}>{incident.location}</span>
                         </div>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Actions</CardTitle>
+                        <CardTitle>Reporter Information</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                        <Button className="w-full gap-2" onClick={handleSummarize} disabled={isPending}>
-                            <Wand2 className="h-4 w-4" />
-                            {isPending ? "Generating..." : "AI Generate Summary"}
-                        </Button>
-                         <div className="space-y-1">
-                            <Label>Update Status</Label>
-                            <Select value={incident.status} onValueChange={(val: "Pending" | "In Progress" | "Resolved") => setIncident({...incident, status: val })}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Change status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Pending">Pending</SelectItem>
-                                    <SelectItem value="In Progress">In Progress</SelectItem>
-                                    <SelectItem value="Resolved">Resolved</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                    <CardContent>
+                        <UserInfo userId={incident.reportedBy} showEmail />
                     </CardContent>
                 </Card>
+                {user?.role === 'manager' && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Actions</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+
+
+                            <div className="space-y-2 pt-2 border-t">
+                                <Label className="text-xs uppercase text-muted-foreground font-bold tracking-wider">Update Status</Label>
+                                <Select
+                                    value={incident.status}
+                                    onValueChange={(val: Incident['status']) => handleStatusChange(val)}
+                                    disabled={isUpdatingStatus}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Change status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Pending">Pending</SelectItem>
+                                        <SelectItem value="In Progress">In Progress</SelectItem>
+                                        <SelectItem value="Resolved">Resolved</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {isUpdatingStatus && <div className="flex items-center justify-center pt-1"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </div>
     );

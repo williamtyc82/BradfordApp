@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Bradford App</title>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --accent-color: #3498db;
+      --bg-color: #f5f7fa;
+      --card-bg: #ffffff;
+      --text-color: #333;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .admin-link {
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .admin-link:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    main {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .section-title {
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 0.5rem;
+    }
+
+    .materials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .material-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .material-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .file-icon {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 1rem;
+      color: var(--accent-color);
+    }
+
+    .file-name {
+      font-weight: 500;
+      margin-bottom: 1rem;
+      word-break: break-all;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .download-btn {
+      background-color: var(--accent-color);
+      color: white;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      margin-top: auto;
+      transition: background 0.2s;
+    }
+
+    .download-btn:hover {
+      background-color: #2980b9;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 3rem;
+      color: #888;
+      font-style: italic;
+    }
+  </style>
+
+  <!-- Firebase SDKs -->
+  <script defer src="/__/firebase/10.7.1/firebase-app-compat.js"></script>
+  <script defer src="/__/firebase/10.7.1/firebase-storage-compat.js"></script>
+  <script defer src="/__/firebase/init.js"></script>
+</head>
+
+<body>
+
+  <header>
+    <h1>The Bradford App</h1>
+    <a href="/manager/" class="admin-link">Go to Manager Mode &rarr;</a>
+  </header>
+
+  <main>
+    <section>
+      <h2 class="section-title">Training Materials</h2>
+      <div id="materials-container" class="materials-grid">
+        <div class="empty-state">Loading materials...</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('materials-container');
+
+      try {
+        const storage = firebase.storage();
+        const listRef = storage.ref('training-materials');
+
+        listRef.listAll()
+          .then((res) => {
+            container.innerHTML = ''; // Clear loading state
+
+            if (res.items.length === 0) {
+              container.innerHTML = '<div class="empty-state">No training materials available yet.</div>';
+              return;
+            }
+
+            res.items.forEach((itemRef) => {
+              itemRef.getDownloadURL().then((url) => {
+                // Create Card
+                const card = document.createElement('div');
+                card.className = 'material-card';
+                card.innerHTML = `
+                                    <svg class="file-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <div class="file-name">${itemRef.name}</div>
+                                    <a href="${url}" target="_blank" class="download-btn">Download</a>
+                                `;
+                container.appendChild(card);
+              }).catch(error => {
+                console.error("Error getting download URL", error);
+              });
+            });
+          }).catch((error) => {
+            console.error("Error listing files", error);
+            container.innerHTML = '<div class="empty-state" style="color:red">Error loading materials.</div>';
+          });
+      } catch (e) {
+        console.error("Firebase Storage Error:", e);
+        container.innerHTML = '<div class="empty-state" style="color:red">Application Error. Check console.</div>';
+      }
+    });
+  </script>
+</body>
+
+</html>

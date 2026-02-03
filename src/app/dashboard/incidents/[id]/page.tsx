@@ -1,6 +1,7 @@
+"use client";
+
 import { IncidentDetails } from "@/components/incidents/incident-details";
-import { incidents } from "@/lib/placeholder-data";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -8,18 +9,32 @@ import {
     BreadcrumbList,
     BreadcrumbPage,
     BreadcrumbSeparator,
-  } from "@/components/ui/breadcrumb"
+} from "@/components/ui/breadcrumb"
 import Link from "next/link";
-  
+import { useFirebase, useDoc, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { Incident } from "@/lib/types";
+import { Loader2 } from "lucide-react";
 
-type IncidentDetailPageProps = {
-    params: {
-        id: string;
+export default function IncidentDetailPage() {
+    const params = useParams();
+    const id = params?.id as string;
+    const { firestore } = useFirebase();
+
+    const incidentDocRef = useMemoFirebase(() => {
+        return id && firestore ? doc(firestore, "incidents", id) : null;
+    }, [id, firestore]);
+
+    const { data: incident, isLoading } = useDoc<Incident>(incidentDocRef);
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <p className="text-muted-foreground animate-pulse text-lg">Loading incident details...</p>
+            </div>
+        );
     }
-}
-
-export default function IncidentDetailPage({ params }: IncidentDetailPageProps) {
-    const incident = incidents.find(i => i.id === params.id);
 
     if (!incident) {
         notFound();
@@ -30,19 +45,19 @@ export default function IncidentDetailPage({ params }: IncidentDetailPageProps) 
             <Breadcrumb>
                 <BreadcrumbList>
                     <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                        <Link href="/dashboard">Dashboard</Link>
-                    </BreadcrumbLink>
+                        <BreadcrumbLink asChild>
+                            <Link href="/dashboard">Dashboard</Link>
+                        </BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                        <Link href="/dashboard/incidents">Incidents</Link>
-                    </BreadcrumbLink>
+                        <BreadcrumbLink asChild>
+                            <Link href="/dashboard/incidents">Incidents</Link>
+                        </BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                    <BreadcrumbPage>Incident #{incident.id}</BreadcrumbPage>
+                        <BreadcrumbPage>Incident Details</BreadcrumbPage>
                     </BreadcrumbItem>
                 </BreadcrumbList>
             </Breadcrumb>

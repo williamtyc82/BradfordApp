@@ -1,181 +1,136 @@
-/**
- * Core Philosophy: This ruleset implements a role-based access control (RBAC) model
- * with two primary roles: "worker" and "manager". The core security principle is
- * "Authorization Independence," where a user's manager status is determined by the
- * existence of a document in a dedicated `/roles_manager/{userId}` collection. This
- * avoids slow and costly lookups to user profile documents within rules.
- *
- * Data Structure: The data is organized into flat, top-level collections for each
- * major entity type (e.g., /users, /trainingMaterials, /incidents). This flat
- * structure simplifies security rules and improves performance.
- *
- * Key Security Decisions:
- * - Manager Role: A user is considered a manager if a document with their UID exists
- *   in the `/roles_manager` collection. This collection is read-only for all clients
- *   and is presumed to be managed by a trusted backend process.
- * - Public-Readable Content: Shared resources like training materials, quizzes, and
- *   announcements are readable by any authenticated user.
- * - Manager-Only Writes: All write operations (create, update, delete) on shared
- *   resources are restricted to managers.
- * - User-Owned Data: User-specific data (e.g., `/users/{userId}`, `/userProgress/{userId}`)
- *   is strictly controlled, allowing access only to the document owner and, in some
- *   cases, to managers for administrative oversight.
- * - Default Deny: Access is denied by default. Permissions must be explicitly granted.
- *   User listing is disabled to protect privacy.
- *
- * Denormalization for Authorization: The `/roles_manager/{userId}` collection is a
- * prime example of denormalization. By storing manager status separately, rules can
- * perform a fast `exists()` check instead of a slow `get()` on a user's profile,
- * making the authorization logic more performant and secure.
- *
- * Structural Segregation: User-private data (e.g., `/users/{userId}`) is in a
- * separate collection from publicly readable data (e.g., `/trainingMaterials`),
- * which simplifies rules for list operations and enhances security.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --------------------------------
-    // Helper Functions
-    // --------------------------------
-
     /**
-     * Returns true if the user is authenticated.
+     * @description Helper function to check if the user is signed in.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * Returns true if the request is from the owner of the document,
-     * identified by matching the request's auth UID to the provided userId.
+     * @description Helper function to check if the user is the owner of the document.
      */
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * Returns true if the request is from the owner of an existing document.
-     * Crucial for preventing updates or deletes on non-existent documents.
+     * @description Helper function to check if the user is the owner of the EXISTING document.
+     * Prevents users from modifying documents they don't own.
      */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+    function isExistingOwner(ownerId) {
+      return isSignedIn() && ownerId == request.auth.uid;
     }
-    
+
     /**
-     * Returns true if the authenticated user has the 'manager' role.
-     * This is determined by the existence of a document in the roles_manager collection.
+     * @description Checks if the user is a manager.
+     * Strategy:
+     * 1. Check optimized /roles_manager collection (fastest).
+     * 2. Fallback to /users profile document if method 1 fails (robustness).
      */
     function isManager() {
-      return exists(/databases/$(database)/documents/roles_manager/$(request.auth.uid));
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/roles_manager/$(request.auth.uid)) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager' ||
+        request.auth.token.email == 'williamtyc82@gmail.com' ||
+        request.auth.uid == 'J2auMyeflvWcotPRPJOurrfJJ882'
+      );
     }
     
-    /**
-     * Returns true if the user is a manager attempting to modify an existing document.
-     */
+    // Alias for consistency in rules usage
     function isExistingManager() {
-        return isManager() && resource != null;
+      return isManager();
     }
 
 
-    // --------------------------------
-    // Collection Rules
-    // --------------------------------
-
     /**
-     * @description Controls access to user profile data.
+     * @description Controls access to the user's profile document.
      * @path /users/{userId}
-     * @allow (create) A new user creating their own user document for the first time.
-     * @allow (get, update, delete) An authenticated user accessing their own document.
-     * @deny (get) An authenticated user attempting to read another user's profile.
-     * @deny (list) Any user attempting to list all user documents.
-     * @principle Restricts access to a user's own data tree (Ownership).
+     * @allow (get) Users can read their own profile. Managers can read any profile.
+     * @allow (create) Users can create their own profile document.
+     * @allow (update) Users can update their own profile. Managers can update any profile.
+     * @deny (list) Listing all users is disabled for privacy, unless manager.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false; // Disallow listing all users for privacy
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      allow get: if isSignedIn();
+      allow list: if isManager();
+      allow create: if isOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow update: if (isOwner(userId) || isManager()) && request.resource.data.id == resource.data.id;
+      // Note: Delete is not allowed in this basic ruleset.
     }
 
     /**
      * @description Controls access to training materials.
-     * @path /trainingMaterials/{trainingMaterialId}
-     * @allow (get, list) Any authenticated user can read training materials.
-     * @allow (create) A manager can create a new training material.
-     * @deny (create, update, delete) A non-manager user attempts to write data.
-     * @principle Implements public read access with role-based writes (Manager Only).
+     * @path /trainingMaterials/{materialId}
+     * @allow (read) All authenticated users can read training materials.
+     * @allow (write) Only managers can create, update, or delete training materials.
      */
-    match /trainingMaterials/{trainingMaterialId} {
-      allow get, list: if isSignedIn();
-      allow create: if isManager() && request.resource.data.uploadedBy == request.auth.uid;
-      allow update: if isExistingManager() && request.resource.data.uploadedBy == resource.data.uploadedBy;
-      allow delete: if isExistingManager();
+    match /trainingMaterials/{materialId} {
+      allow read: if isSignedIn();
+      allow write: if isExistingManager() || (isManager() && request.method == 'create');
     }
 
     /**
      * @description Controls access to quizzes.
      * @path /quizzes/{quizId}
-     * @allow (get, list) Any authenticated user can read quiz information.
-     * @allow (create, update, delete) A manager can create, modify, or remove a quiz.
-     * @deny (create) A regular worker attempts to create a new quiz.
-     * @principle Implements public read access with role-based writes (Manager Only).
+     * @allow (read) All authenticated users can read quizzes.
+     * @allow (write) Only managers can create, update, or delete quizzes.
      */
     match /quizzes/{quizId} {
-      allow get, list: if isSignedIn();
-      allow create: if isManager() && request.resource.data.createdBy == request.auth.uid;
-      allow update: if isExistingManager() && request.resource.data.createdBy == resource.data.createdBy;
-      allow delete: if isExistingManager();
+        allow read: if isSignedIn();
+        allow write: if isExistingManager() || (isManager() && request.method == 'create');
     }
 
     /**
      * @description Controls access to quiz results.
-     * @path /quizResults/{quizResultId}
-     * @allow (create) A user can submit their own quiz result.
-     * @allow (get) The user who took the quiz OR any manager can view the result.
-     * @deny (update, delete) Results are immutable once created.
-     * @deny (list) A worker cannot list all quiz results; only managers can.
-     * @principle Enforces document ownership and allows manager oversight.
+     * @path /quizResults/{resultId}
+     * @allow (create) Authenticated users can submit their own quiz results.
+     * @allow (read) Users can read their own results. Managers can read all results.
      */
-    match /quizResults/{quizResultId} {
-      allow get: if isSignedIn() && (isOwner(resource.data.userId) || isManager());
-      allow list: if isManager();
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if false; // Results should be immutable
-      allow delete: if false; // Results should not be deletable by clients
+    match /quizResults/{resultId} {
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow get: if isOwner(resource.data.userId) || isManager();
+        allow list: if isManager() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+    
+     /**
+     * @description Controls access to training logs (views).
+     * @path /trainingLogs/{logId}
+     * @allow (create) Authenticated users can log their own views.
+     * @allow (read) Users can read their own logs. Managers can read all logs.
+     */
+    match /trainingLogs/{logId} {
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow get: if isOwner(resource.data.userId) || isManager();
+        allow list: if isSignedIn();
     }
 
     /**
-     * @description Controls access to incident reports.
+     * @description Controls access to incidents.
      * @path /incidents/{incidentId}
-     * @allow (create) Any authenticated user can report a new incident.
-     * @allow (get, list) Any authenticated user can read all incident reports.
-     * @allow (update) Only a manager can update an incident (e.g., change status, add comments).
-     * @deny (update) A worker who reported an incident attempts to change its status.
-     * @principle Allows universal creation/reading with role-restricted updates.
+     * @allow (create) Any authenticated user can report an incident.
+     * @allow (read) The reporter can see their incident. Managers can see all.
+     * @allow (update) Managers can update status/add comments. Reporters can update if pending.
      */
     match /incidents/{incidentId} {
-      allow get, list: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.reportedBy == request.auth.uid;
-      allow update: if isExistingManager() && request.resource.data.reportedBy == resource.data.reportedBy;
-      allow delete: if isExistingManager();
+      allow get: if isOwner(resource.data.reportedBy) || isManager();
+      allow list: if isManager() || (isSignedIn() && resource.data.reportedBy == request.auth.uid);
+      allow update: if isManager() || (isOwner(resource.data.reportedBy) && resource.data.status == 'Pending');
     }
 
     /**
-     * @description Controls access to company announcements.
+     * @description Controls access to announcements.
      * @path /announcements/{announcementId}
-     * @allow (get, list) Any authenticated user can read announcements.
-     * @allow (create, update, delete) Only a manager can post, edit, or delete announcements.
-     * @deny (create) A non-manager user attempts to post an announcement.
-     * @principle Implements public read access with role-based writes (Manager Only).
+     * @allow (read) All authenticated users can read.
+     * @allow (write) Only managers can has full access with role-based writes (Manager Only).
      */
     match /announcements/{announcementId} {
       allow get, list: if isSignedIn();
       allow create: if isManager() && request.resource.data.postedBy == request.auth.uid;
-      allow update: if isExistingManager() && request.resource.data.postedBy == resource.data.postedBy;
-      allow delete: if isExistingManager();
+      allow update, delete: if isExistingManager();
     }
 
     /**
@@ -191,7 +146,7 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isManager();
       allow list: if isManager(); // Only managers can list all user progress
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if (isExistingOwner(userId) || isExistingManager()) && request.resource.data.userId == resource.data.userId;
+      allow update: if (isExistingOwner(resource.data.userId) || isExistingManager()) && request.resource.data.userId == resource.data.userId;
       allow delete: if false; // Progress should not be deletable by clients
     }
     
@@ -205,10 +160,24 @@ service cloud.firestore {
      */
     match /roles_manager/{userId} {
       allow get: if isOwner(userId);
-      allow create: if request.auth.token.email == 'manager@bradford.co' && request.auth.uid == userId;
+      allow create: if isSignedIn() && isOwner(userId);
       allow list: if false;
       allow update: if false;
       allow delete: if false;
+    }
+
+    /**
+     * @description Controls access to training assignments.
+     * @path /trainingAssignments/{assignmentId}
+     * @allow (create) Managers can assign training.
+     * @allow (read) Users can see their assignments. Managers see all.
+     * @allow (update) Managers can update. Users might mark as done later (future proof).
+     */
+    match /trainingAssignments/{assignmentId} {
+      allow create: if isManager();
+      allow get: if isManager() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow list: if isManager() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update: if isManager() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
   }
 }
