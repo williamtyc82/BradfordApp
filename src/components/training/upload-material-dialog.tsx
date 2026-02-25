@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { Textarea } from "../ui/textarea"
-import { Upload, Plus, Trash2, X } from "lucide-react"
+import { Upload, Plus, X } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +22,7 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
-import { useFirebase } from "@/firebase";
+import { useFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { addDoc, collection } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
@@ -83,7 +83,6 @@ export function UploadMaterialDialog({ openOverride, onOpenChangeOverride }: Upl
     const { formState: { isSubmitting } } = form;
 
     const onSubmit = async (data: FormData) => {
-        console.log("UploadMaterialDialog: Starting onSubmit", data);
         if (!user || !firestore || !storage) {
             toast({ title: "Services not available", variant: "destructive" });
             return;
@@ -92,6 +91,7 @@ export function UploadMaterialDialog({ openOverride, onOpenChangeOverride }: Upl
         let uploadedDocURLs: string[] = [];
         let uploadedImgURLs: string[] = [];
         let finalVideoURLs: string[] = [];
+        let materialData; // Define here to be accessible in the catch block
 
         try {
             // 1. Handle Documents
@@ -134,9 +134,15 @@ export function UploadMaterialDialog({ openOverride, onOpenChangeOverride }: Upl
         // 4. Handle Thumbnail
         let finalThumbnailURL = "";
         if (thumbnailFile) {
-            const thumbRef = ref(storage, `training/thumbnails/${user.id}/${Date.now()}-${thumbnailFile.name}`);
-            await uploadBytes(thumbRef, thumbnailFile);
-            finalThumbnailURL = await getDownloadURL(thumbRef);
+            try {
+                const thumbRef = ref(storage, `training/thumbnails/${user.id}/${Date.now()}-${thumbnailFile.name}`);
+                await uploadBytes(thumbRef, thumbnailFile);
+                finalThumbnailURL = await getDownloadURL(thumbRef);
+            } catch (thumbError: any) {
+                console.error("Thumbnail upload error:", thumbError);
+                toast({ title: "Thumbnail Upload Failed", description: thumbError.message || "Could not upload thumbnail image.", variant: "destructive" });
+                return; // Stop if thumbnail fails
+            }
         }
 
         // 5. Determine FileType
@@ -153,7 +159,7 @@ export function UploadMaterialDialog({ openOverride, onOpenChangeOverride }: Upl
             return;
         }
 
-        const materialData = {
+        materialData = {
             title: data.title,
             description: data.description,
             category: data.category,
@@ -170,17 +176,28 @@ export function UploadMaterialDialog({ openOverride, onOpenChangeOverride }: Upl
             views: 0,
         };
 
-        try {
-            const trainingCollectionRef = collection(firestore, "trainingMaterials");
-            await addDoc(trainingCollectionRef, materialData);
-            toast({ title: "Success!", description: `"${data.title}" added successfully.` });
-            form.reset();
-            setThumbnailFile(null);
-            if (setCurrentOpen) setCurrentOpen(false);
-        } catch (e: any) {
-            console.error("Firestore save error:", e);
-            toast({ title: "Save Failed", description: e.message || "Could not save material to database.", variant: "destructive" });
-        }
+        const trainingCollectionRef = collection(firestore, "trainingMaterials");
+
+        addDoc(trainingCollectionRef, materialData)
+            .then(() => {
+                toast({ title: "Success!", description: `"${data.title}" added successfully.` });
+                form.reset();
+                setThumbnailFile(null);
+                if (setCurrentOpen) setCurrentOpen(false);
+            })
+            .catch((serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: trainingCollectionRef.path,
+                    operation: 'create',
+                    requestResourceData: materialData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({
+                    title: "Save Failed",
+                    description: "You may not have permission to save this material. Check the developer overlay for details.",
+                    variant: "destructive"
+                });
+            });
     }
 
     return (
