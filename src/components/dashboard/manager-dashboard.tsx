@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -84,37 +85,47 @@ export function ManagerDashboard() {
         />
       </div>
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+        <Card className="xl:col-span-2 overflow-hidden">
           <CardHeader>
             <CardTitle>Worker Progress Overview</CardTitle>
             <CardDescription>
               Training and quiz completion rates for the past 6 months.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             <ProgressChart />
           </CardContent>
         </Card>
-        <RecentIncidents />
-        <Card>
-          <CardHeader>
-            <CardTitle>Manager Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-2">
-            <Button asChild className="w-full justify-start py-6 text-base" size="lg">
-              <Link href="/dashboard/training?upload=true">
-                <BookOpen className="mr-3 h-5 w-5" />
-                Upload New Training Material
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full justify-start py-6 text-base" size="lg">
-              <Link href="/dashboard/quizzes">
-                <ClipboardList className="mr-3 h-5 w-5" />
-                Create New Quiz
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="incidents" className="w-full min-w-0">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="incidents">Recent Incidents</TabsTrigger>
+            <TabsTrigger value="actions">Quick Actions</TabsTrigger>
+          </TabsList>
+          <TabsContent value="incidents">
+            <RecentIncidents />
+          </TabsContent>
+          <TabsContent value="actions">
+            <Card>
+              <CardHeader>
+                <CardTitle>Manager Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-2 overflow-x-auto">
+                <Button asChild className="w-full justify-start py-6 text-base" size="lg">
+                  <Link href="/dashboard/training?upload=true">
+                    <BookOpen className="mr-3 h-5 w-5" />
+                    Upload New Training Material
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full justify-start py-6 text-base" size="lg">
+                  <Link href="/dashboard/quizzes">
+                    <ClipboardList className="mr-3 h-5 w-5" />
+                    Create New Quiz
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )

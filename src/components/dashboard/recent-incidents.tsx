@@ -58,7 +58,7 @@ export function RecentIncidents() {
                     </Link>
                 </Button>
             </CardHeader>
-            <CardContent className="grid gap-4">
+            <CardContent className="grid gap-4 overflow-x-auto">
                 {recentIncidents.length > 0 ? recentIncidents.map(incident => (
                     <IncidentItem key={incident.id} incident={incident} />
                 )) : (
